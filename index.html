@@ -2,530 +2,641 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Northern Michigan Backyard — v2</title>
+<title>Northern Michigan's Backyard</title>
 <meta name="viewport" content="width=1920, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/suncalc@1.9.0/suncalc.min.js"></script>
 <style>
-  :root {
-    --bg: transparent;
-    --ink: rgba(230, 228, 220, 0.92);
-    --ink-dim: rgba(230, 228, 220, 0.55);
-    --ink-faint: rgba(230, 228, 220, 0.28);
-    --rule: rgba(230, 228, 220, 0.15);
-    --accent: rgba(198, 156, 92, 0.85);
-    --alert: rgba(210, 100, 80, 0.9);
-    --alert-dim: rgba(210, 100, 80, 0.5);
-    --rare: rgba(160, 200, 180, 0.9);
-    --mono: 'JetBrains Mono', ui-monospace, monospace;
-    --serif: 'Cormorant Garamond', Georgia, serif;
-    --pad: 28px;
-  }
+/* ================================================================
+   NORTHERN MICHIGAN'S BACKYARD — v4
+   Hierarchy-first. Asymmetric. Inevitable.
+   ================================================================ */
+:root {
+  /* Full opacity ink — no more "polite" colours */
+  --ink:        rgb(252, 250, 242);
+  --ink-2:      rgba(252, 250, 242, 0.72);
+  --ink-3:      rgba(252, 250, 242, 0.42);
+  --ink-4:      rgba(252, 250, 242, 0.22);
+  --rule:       rgba(252, 250, 242, 0.16);
+  --accent:     rgb(212, 168, 82);
+  --accent-dim: rgba(212, 168, 82, 0.65);
+  --alert:      rgb(218, 82, 62);
+  --rare:       rgb(128, 204, 166);
+  --rare-dim:   rgba(128, 204, 166, 0.55);
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* Panels — deliberately unequal weights */
+  --panel-hdr: rgba(0,0,0,0.64);
+  --panel-side: rgba(0,0,0,0.52);
+  --panel-bot: rgba(0,0,0,0.70);  /* heavier — narrative anchor */
 
-  html, body {
-    width: 1920px; height: 1080px;
-    background: transparent;
-    color: var(--ink);
-    font-family: var(--mono);
-    font-weight: 400;
-    overflow: hidden;
-    -webkit-font-smoothing: antialiased;
-    letter-spacing: 0.01em;
-  }
+  --mono:  'JetBrains Mono', ui-monospace, monospace;
+  --serif: 'Cormorant Garamond', Georgia, serif;
 
-  body::before {
-    content: "";
-    position: fixed; inset: 0;
-    pointer-events: none;
-    background:
-      radial-gradient(ellipse at 8% 8%, rgba(0,0,0,0.38), transparent 38%),
-      radial-gradient(ellipse at 92% 92%, rgba(0,0,0,0.38), transparent 38%),
-      radial-gradient(ellipse at 92% 8%, rgba(0,0,0,0.30), transparent 33%),
-      radial-gradient(ellipse at 8% 92%, rgba(0,0,0,0.30), transparent 33%);
-    z-index: 0;
-  }
+  /* Tier shadows — stronger than v3 */
+  --t1shadow: 0 2px 6px rgba(0,0,0,1), 0 0 18px rgba(0,0,0,0.8);
+  --t2shadow: 0 1px 4px rgba(0,0,0,0.95), 0 0 10px rgba(0,0,0,0.6);
+  --t3shadow: 0 1px 3px rgba(0,0,0,0.85);
+}
 
-  .overlay { position: relative; width: 100%; height: 100%; z-index: 1; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  /* ── Corner ticks ── */
-  .tick {
-    position: absolute; width: 12px; height: 12px;
-    border-color: var(--ink-faint); border-style: solid; border-width: 0;
-  }
-  .tick.tl { top: 14px; left: 14px; border-top-width: 1px; border-left-width: 1px; }
-  .tick.tr { top: 14px; right: 14px; border-top-width: 1px; border-right-width: 1px; }
-  .tick.bl { bottom: 14px; left: 14px; border-bottom-width: 1px; border-left-width: 1px; }
-  .tick.br { bottom: 14px; right: 14px; border-bottom-width: 1px; border-right-width: 1px; }
+html, body {
+  width: 1920px; height: 1080px;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--mono);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
 
-  /* ── Hairlines ── */
-  .hairline { position: absolute; background: var(--rule); pointer-events: none; }
-  .hairline.top { top: 112px; left: var(--pad); right: var(--pad); height: 1px; }
-  .hairline.bot { bottom: 168px; left: var(--pad); right: var(--pad); height: 1px; }
+.overlay { position: relative; width: 100%; height: 100%; }
 
-  /* ── Masthead ── */
-  .masthead {
-    position: absolute; top: var(--pad); left: var(--pad);
-    display: flex; flex-direction: column; gap: 4px;
-  }
-  .masthead .seal {
-    font-size: 9px; letter-spacing: 0.30em; text-transform: uppercase;
-    color: var(--ink-dim);
-  }
-  .masthead .title {
-    font-family: var(--serif); font-size: 26px; font-weight: 400;
-    letter-spacing: 0.04em; color: var(--ink); line-height: 1;
-  }
-  .masthead .sub {
-    font-size: 9px; letter-spacing: 0.24em; text-transform: uppercase;
-    color: var(--ink-faint); margin-top: 5px;
-  }
+/* ================================================================
+   PANELS — asymmetric weights, different border opacities
+   Left is narrower than right. Bottom is heavier than top.
+   ================================================================ */
+.panel-header {
+  position: absolute; top: 0; left: 0; right: 0; height: 120px;
+  background: var(--panel-hdr);
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+  z-index: 1;
+}
+/* Left: narrow, recedes slightly — context data */
+.panel-left {
+  position: absolute; top: 120px; left: 0;
+  width: 340px; bottom: 190px;
+  background: var(--panel-side);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border-right: 1px solid rgba(252,250,242,0.12);
+  z-index: 1;
+}
+/* Right: slightly wider — more active data */
+.panel-right {
+  position: absolute; top: 120px; right: 0;
+  width: 380px; bottom: 190px;
+  background: var(--panel-side);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+  border-left: 1px solid rgba(252,250,242,0.12);
+  z-index: 1;
+}
+/* Bottom: heaviest — narrative anchor */
+.panel-bottom {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 190px;
+  background: var(--panel-bot);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(252,250,242,0.22);
+  z-index: 1;
+}
 
-  /* ── LED ── */
-  .led {
-    position: absolute; top: calc(var(--pad) + 50px); left: var(--pad);
-    display: flex; align-items: center; gap: 7px;
-    font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
-    color: var(--ink-faint);
-  }
-  .led .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 8px rgba(198,156,92,0.45);
-    animation: pulse 4s ease-in-out infinite;
-  }
-  .led.alert-mode .dot { background: var(--alert); box-shadow: 0 0 10px rgba(210,100,80,0.6); animation: pulse-fast 1.2s ease-in-out infinite; }
-  @keyframes pulse { 0%,100%{opacity:0.4} 50%{opacity:1} }
-  @keyframes pulse-fast { 0%,100%{opacity:0.5} 50%{opacity:1} }
+/* Corner ticks */
+.tick {
+  position: absolute; width: 12px; height: 12px; z-index: 5;
+  border-color: var(--ink-4); border-style: solid; border-width: 0;
+}
+.tick.tl { top: 14px; left: 14px; border-top-width: 1px; border-left-width: 1px; }
+.tick.tr { top: 14px; right: 14px; border-top-width: 1px; border-right-width: 1px; }
+.tick.bl { bottom: 14px; left: 14px; border-bottom-width: 1px; border-left-width: 1px; }
+.tick.br { bottom: 14px; right: 14px; border-bottom-width: 1px; border-right-width: 1px; }
 
-  /* ── Station (top right) ── */
-  .station {
-    position: absolute; top: var(--pad); right: var(--pad);
-    text-align: right; display: flex; flex-direction: column; gap: 2px;
-  }
-  .station .clock {
-    font-size: 28px; font-weight: 300; letter-spacing: 0.06em;
-    color: var(--ink); font-variant-numeric: tabular-nums;
-  }
-  .station .meta {
-    font-size: 10px; letter-spacing: 0.20em; text-transform: uppercase;
-    color: var(--ink-dim); margin-top: 5px;
-  }
-  .station .meta .lbl { color: var(--ink-faint); }
-  .station .session-count {
-    font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
-    color: var(--ink-faint); margin-top: 8px;
-  }
+/* ================================================================
+   HEADER — Tier 1 identity + clock
+   ================================================================ */
+.masthead {
+  position: absolute; top: 24px; left: 28px; z-index: 2;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.masthead .seal {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.32em;
+  text-transform: uppercase; color: var(--ink-3);
+  text-shadow: var(--t3shadow);
+}
+/* TIER 1 — largest identity element */
+.masthead .title {
+  font-family: var(--serif); font-size: 38px; font-weight: 300;
+  letter-spacing: 0.02em; color: var(--ink); line-height: 1;
+  text-shadow: var(--t1shadow);
+}
+.masthead .sub {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.24em;
+  text-transform: uppercase; color: var(--ink-4);
+  text-shadow: var(--t3shadow); margin-top: 2px;
+}
 
-  /* ── Reading blocks ── */
-  .reading { padding-top: 10px; border-top: 1px solid var(--rule); }
-  .reading .lbl {
-    font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
-    color: var(--ink-faint); margin-bottom: 5px;
-  }
-  .reading .val {
-    font-size: 14px; font-weight: 400; letter-spacing: 0.04em;
-    color: var(--ink); font-variant-numeric: tabular-nums;
-  }
-  .reading .val.small {
-    font-size: 11px; color: var(--ink-dim); margin-top: 2px; letter-spacing: 0.06em;
-  }
-  .reading .val.accent { color: var(--accent); }
-  .reading .val.rare-val { color: var(--rare); }
+/* Status indicator */
+.led {
+  position: absolute; top: 86px; left: 28px; z-index: 2;
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.26em;
+  text-transform: uppercase; color: var(--ink-4);
+  text-shadow: var(--t3shadow);
+}
+.led .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 10px rgba(212,168,82,0.55);
+  animation: pulse 5s ease-in-out infinite;
+}
+.led.alert-mode .dot {
+  background: var(--alert);
+  box-shadow: 0 0 12px rgba(218,82,62,0.7);
+  animation: pulse-fast 1s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{opacity:0.3} 50%{opacity:1} }
+@keyframes pulse-fast { 0%,100%{opacity:0.5} 50%{opacity:1} }
 
-  /* ── Left column ── */
-  .readings {
-    position: absolute; top: 140px; left: var(--pad);
-    width: 320px; display: flex; flex-direction: column; gap: 20px;
-  }
+/* TIER 1 — Clock. Dominant. */
+.station {
+  position: absolute; top: 18px; right: 28px; z-index: 2;
+  text-align: right; display: flex; flex-direction: column; gap: 2px;
+}
+.station .clock {
+  font-size: 56px; font-weight: 800; letter-spacing: 0.03em;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+  text-shadow: var(--t1shadow); line-height: 1;
+}
+.station .dateline {
+  font-size: 12px; font-weight: 600; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--ink-2);
+  text-shadow: var(--t2shadow); margin-top: 5px;
+}
+.station .coords {
+  font-size: 11px; font-weight: 400; letter-spacing: 0.14em;
+  color: var(--ink-3); text-shadow: var(--t3shadow);
+}
+.station .session {
+  font-size: 10px; font-weight: 400; letter-spacing: 0.14em;
+  color: var(--ink-4); text-shadow: var(--t3shadow);
+}
 
-  /* ── Right column ── */
-  .inferred {
-    position: absolute; top: 140px; right: var(--pad);
-    width: 320px; text-align: right;
-    display: flex; flex-direction: column; gap: 20px;
-  }
+/* Astro/ISS strip — right, below clock panel */
+.astro-strip {
+  position: absolute; top: 86px; right: 28px; z-index: 2;
+  text-align: right; width: 500px;
+  opacity: 0; transition: opacity 1.4s ease;
+}
+.astro-strip.visible { opacity: 1; }
+.astro-strip .lbl {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--ink-4);
+  text-shadow: var(--t3shadow);
+}
+.astro-strip .val {
+  font-size: 13px; font-weight: 600; color: var(--accent);
+  text-shadow: var(--t2shadow); letter-spacing: 0.05em;
+}
 
-  /* ── Species ── */
-  .species-list {
-    font-size: 11px; letter-spacing: 0.07em; color: var(--ink-dim); line-height: 1.75;
-  }
-  .species-list .sp { display: block; }
-  .species-list .sp.new { color: var(--accent); }
+/* NOAA alert */
+.noaa-bar {
+  position: absolute; top: 120px; left: 28px; right: 28px; z-index: 3;
+  padding: 6px 0; display: none; align-items: center; gap: 14px;
+  border-bottom: 1px solid rgba(218,82,62,0.35);
+  background: rgba(218,82,62,0.10);
+}
+.noaa-bar.active { display: flex; }
+.noaa-bar .nb-lbl {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.26em;
+  text-transform: uppercase; color: rgba(218,82,62,0.8);
+  text-shadow: var(--t2shadow);
+}
+.noaa-bar .nb-txt {
+  font-size: 14px; font-weight: 700; color: var(--alert);
+  text-shadow: var(--t2shadow); letter-spacing: 0.05em;
+}
 
-  /* ── Forest condition strip (center, mid-screen) ── */
-  .forest-strip {
-    position: absolute;
-    top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 560px; text-align: center;
-    opacity: 0;
-    transition: opacity 1.2s ease;
-  }
-  .forest-strip.visible { opacity: 1; }
-  .forest-strip .lbl {
-    font-size: 9px; letter-spacing: 0.32em; text-transform: uppercase;
-    color: var(--ink-faint); margin-bottom: 14px;
-  }
-  .forest-strip .conditions {
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  .forest-strip .cond {
-    display: flex; justify-content: space-between; align-items: baseline;
-    border-top: 1px solid var(--rule); padding-top: 7px;
-  }
-  .forest-strip .cond-lbl {
-    font-size: 9px; letter-spacing: 0.26em; text-transform: uppercase; color: var(--ink-faint);
-  }
-  .forest-strip .cond-val {
-    font-size: 13px; color: var(--ink-dim); letter-spacing: 0.04em;
-  }
+/* ================================================================
+   LEFT COLUMN — Tier 3 (context data, recedes)
+   Solar, lunar, forest condition
+   ================================================================ */
+.readings {
+  position: absolute; top: 132px; left: 0; z-index: 2;
+  width: 340px; padding: 0 22px;
+  display: flex; flex-direction: column;
+}
+/* TIER 3 readings — deliberately smaller/lighter than right */
+.reading {
+  padding: 10px 0 9px;
+  border-bottom: 1px solid var(--rule);
+  transition: opacity 2s ease; /* allows recede effect */
+}
+.reading .lbl {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--ink-4);
+  text-shadow: var(--t3shadow); margin-bottom: 4px;
+}
+.reading .val {
+  font-size: 16px; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--ink-2); font-variant-numeric: tabular-nums;
+  text-shadow: var(--t2shadow); line-height: 1.2;
+}
+.reading .val.sub {
+  font-size: 12px; font-weight: 400; color: var(--ink-3);
+  margin-top: 2px; letter-spacing: 0.04em;
+  text-shadow: var(--t3shadow);
+}
+.reading.receded { opacity: 0.45; }
 
-  /* ── Rare event banner ── */
-  .rare-banner {
-    position: absolute;
-    top: 50%; left: 50%; transform: translate(-50%, -50%);
-    width: 720px; text-align: center;
-    opacity: 0; pointer-events: none;
-    transition: opacity 0.4s ease;
-    z-index: 10;
-  }
-  .rare-banner.active { opacity: 1; }
-  .rare-banner .rb-label {
-    font-size: 9px; letter-spacing: 0.38em; text-transform: uppercase;
-    color: var(--rare); margin-bottom: 12px;
-    border-bottom: 1px solid rgba(160,200,180,0.25); padding-bottom: 8px;
-  }
-  .rare-banner .rb-main {
-    font-family: var(--mono); font-size: 17px; letter-spacing: 0.06em;
-    color: var(--ink); line-height: 1.5; font-weight: 400;
-  }
-  .rare-banner .rb-sub {
-    font-size: 11px; letter-spacing: 0.12em; color: var(--ink-dim);
-    margin-top: 8px;
-  }
-  .rare-banner .rb-timestamp {
-    font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
-    color: var(--rare); margin-top: 14px; opacity: 0.7;
-  }
+/* ================================================================
+   RIGHT COLUMN — Tier 2 (active data, reads clearly)
+   Weather, feeder, species — more prominent
+   ================================================================ */
+.inferred {
+  position: absolute; top: 132px; right: 0; z-index: 2;
+  width: 380px; padding: 0 24px; text-align: right;
+  display: flex; flex-direction: column;
+}
+/* TIER 2 readings — larger, heavier than left */
+.reading-r {
+  padding: 10px 0 9px;
+  border-bottom: 1px solid var(--rule);
+  transition: opacity 2s ease;
+}
+.reading-r .lbl {
+  font-size: 9px; font-weight: 600; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--ink-4);
+  text-shadow: var(--t3shadow); margin-bottom: 4px;
+}
+.reading-r .val {
+  font-size: 20px; font-weight: 800; letter-spacing: 0.01em;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+  text-shadow: var(--t1shadow); line-height: 1.15;
+}
+.reading-r .val.sub {
+  font-size: 13px; font-weight: 500; color: var(--ink-2);
+  margin-top: 3px; letter-spacing: 0.03em;
+  text-shadow: var(--t2shadow);
+}
+.reading-r .val.accent { color: var(--accent); }
+.reading-r .val.dimmed { color: var(--ink-3); font-weight: 600; }
+.reading-r.receded { opacity: 0.45; }
 
-  /* ── NOAA alert bar ── */
-  .noaa-bar {
-    position: absolute; top: 116px; left: var(--pad); right: var(--pad);
-    padding: 6px 0 5px; border-bottom: 1px solid rgba(210,100,80,0.3);
-    display: none; align-items: center; gap: 10px;
-  }
-  .noaa-bar.active { display: flex; }
-  .noaa-bar .nb-label {
-    font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
-    color: var(--alert-dim);
-  }
-  .noaa-bar .nb-text {
-    font-size: 11px; letter-spacing: 0.08em; color: var(--alert);
-  }
+/* Species */
+.species-list {
+  font-size: 13px; font-weight: 500; letter-spacing: 0.03em;
+  color: var(--ink-2); line-height: 1.85;
+  text-shadow: var(--t2shadow);
+}
+.species-list .sp { display: block; }
+.species-list .sp.new { color: var(--accent); font-weight: 700; }
 
-  /* ── Feeder status ── */
-  .feeder-arc {
-    position: absolute; top: 140px; left: 50%; transform: translateX(-50%);
-    width: 440px; text-align: center;
-    opacity: 0; transition: opacity 1s ease;
-  }
-  .feeder-arc.visible { opacity: 1; }
-  .feeder-arc .lbl {
-    font-size: 9px; letter-spacing: 0.30em; text-transform: uppercase;
-    color: var(--ink-faint); margin-bottom: 10px;
-  }
-  .feeder-arc .status {
-    font-size: 16px; letter-spacing: 0.04em; color: var(--ink);
-    font-variant-numeric: tabular-nums;
-  }
-  .feeder-arc .status.quiet { color: var(--ink-dim); }
-  .feeder-arc .context {
-    font-family: var(--serif); font-style: italic; font-size: 15px;
-    color: var(--ink-dim); margin-top: 8px; line-height: 1.4;
-  }
-  .feeder-arc .anticipate {
-    font-size: 11px; letter-spacing: 0.08em; color: var(--accent);
-    margin-top: 10px; line-height: 1.5;
-  }
+/* ================================================================
+   BOTTOM PANEL — Narrative anchor
+   Three zones: echo log / elder voice / observation
+   ================================================================ */
 
-  /* ── Bottom left: echo ── */
-  .echo {
-    position: absolute; bottom: var(--pad); left: var(--pad);
-    width: 560px; border-top: 1px solid var(--rule); padding-top: 10px;
-  }
-  .echo .lbl {
-    font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
-    color: var(--ink-faint); margin-bottom: 6px;
-  }
-  .echo .line {
-    font-size: 13px; color: var(--ink); letter-spacing: 0.02em;
-    font-variant-numeric: tabular-nums; line-height: 1.5;
-  }
-  .echo .line + .line {
-    color: var(--ink-dim); font-size: 11px; margin-top: 4px;
-  }
-  .echo .line.rare-echo { color: var(--rare); }
+/* ── Event log (bottom left) — Tier 2 ── */
+.echo {
+  position: absolute; bottom: 28px; left: 28px; z-index: 2;
+  width: 500px;
+}
+.echo .lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--ink-4);
+  text-shadow: var(--t3shadow); margin-bottom: 10px;
+}
+/* Primary echo line — Tier 2 weight */
+.echo .ev-type {
+  font-size: 16px; font-weight: 700; color: var(--ink);
+  letter-spacing: 0.02em; text-shadow: var(--t2shadow);
+  line-height: 1.2;
+}
+.echo .ev-type.rare { color: var(--rare); }
+/* Log detail lines — Tier 3 */
+.echo .ev-detail {
+  font-size: 12px; font-weight: 400; color: var(--ink-3);
+  letter-spacing: 0.04em; text-shadow: var(--t3shadow);
+  margin-top: 4px; line-height: 1.6;
+}
+.echo .ev-ago {
+  font-size: 12px; font-weight: 600; color: var(--ink-2);
+  letter-spacing: 0.06em; text-shadow: var(--t2shadow);
+  margin-top: 2px;
+}
+.echo .ev-session {
+  font-size: 10px; font-weight: 400; color: var(--ink-4);
+  letter-spacing: 0.10em; text-shadow: var(--t3shadow);
+  margin-top: 6px; text-transform: uppercase;
+}
 
-  /* ── Bottom center: elder voice ── */
-  .elder {
-    position: absolute; bottom: 44px;
-    left: 50%; transform: translateX(-50%);
-    width: 700px; text-align: center; padding: 0 40px;
-  }
-  .elder .mark {
-    font-size: 9px; letter-spacing: 0.32em; text-transform: uppercase;
-    color: var(--ink-faint); margin-bottom: 10px;
-  }
-  .elder .line {
-    font-family: var(--serif); font-size: 22px; font-weight: 300;
-    font-style: italic; line-height: 1.45; color: var(--ink);
-    letter-spacing: 0.01em; transition: opacity 1s ease;
-  }
-  .elder .line.fade { opacity: 0; }
+/* ── Elder voice (bottom center) — TIER 1 ── */
+.elder {
+  position: absolute; bottom: 32px;
+  left: 50%; transform: translateX(-50%);
+  width: 760px; text-align: center; padding: 0 48px;
+  z-index: 2;
+}
+.elder .mark {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.34em;
+  text-transform: uppercase; color: var(--ink-4);
+  text-shadow: var(--t3shadow); margin-bottom: 12px;
+}
+/* THE dominant typographic moment on screen */
+.elder .line {
+  font-family: var(--serif); font-size: 32px; font-weight: 300;
+  font-style: italic; line-height: 1.3; color: var(--ink);
+  letter-spacing: 0.01em;
+  text-shadow: 0 2px 10px rgba(0,0,0,1), 0 0 30px rgba(0,0,0,0.9);
+  transition: opacity 1.4s ease;
+}
+.elder .line.fade { opacity: 0; }
 
-  /* ── Bottom right: cycling / phenology ── */
-  .cycling {
-    position: absolute; bottom: var(--pad); right: var(--pad);
-    width: 460px; text-align: right;
-    border-top: 1px solid var(--rule); padding-top: 10px;
-  }
-  .cycling .lbl {
-    font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
-    color: var(--ink-faint); margin-bottom: 6px;
-  }
-  .cycling .line {
-    font-size: 12px; color: var(--ink-dim); line-height: 1.55;
-    letter-spacing: 0.02em; transition: opacity 0.6s ease;
-  }
-  .cycling .line.fade { opacity: 0; }
-  .cycling .phenology {
-    font-size: 10px; color: var(--accent); letter-spacing: 0.08em;
-    margin-top: 5px; line-height: 1.5;
-  }
+/* ── Cycling observation (bottom right) — Tier 2/3 ── */
+.cycling {
+  position: absolute; bottom: 28px; right: 28px; z-index: 2;
+  width: 500px; text-align: right;
+}
+.cycling .lbl {
+  font-size: 9px; font-weight: 700; letter-spacing: 0.28em;
+  text-transform: uppercase; color: var(--ink-4);
+  text-shadow: var(--t3shadow); margin-bottom: 8px;
+}
+.cycling .line {
+  font-size: 15px; font-weight: 500; color: var(--ink-2);
+  line-height: 1.5; letter-spacing: 0.02em;
+  text-shadow: var(--t2shadow); transition: opacity 0.8s ease;
+}
+.cycling .line.fade { opacity: 0; }
+.cycling .pheno {
+  font-size: 12px; font-weight: 600; color: var(--accent-dim);
+  letter-spacing: 0.06em; text-shadow: var(--t2shadow);
+  margin-top: 7px; line-height: 1.4;
+}
 
-  /* ── Overnight mode ── */
-  body.overnight { }
-  body.overnight .masthead .title { color: rgba(230,228,220,0.65); }
-  body.overnight .led .dot { background: rgba(100,140,180,0.7); box-shadow: 0 0 8px rgba(100,140,180,0.3); }
-
-  /* ── Astronomy strip (ISS / meteor / planet) ── */
-  .astro-strip {
-    position: absolute; top: calc(var(--pad) + 88px); right: var(--pad);
-    text-align: right; width: 320px;
-    opacity: 0; transition: opacity 1s ease;
-  }
-  .astro-strip.visible { opacity: 1; }
-  .astro-strip .lbl {
-    font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
-    color: var(--ink-faint); margin-bottom: 4px;
-  }
-  .astro-strip .val {
-    font-size: 12px; letter-spacing: 0.06em; color: var(--accent);
-  }
+/* ================================================================
+   RARE EVENT BANNER — center screen
+   Panel-backed, bordered, unambiguous language
+   ================================================================ */
+.rare-banner {
+  position: absolute;
+  top: 50%; left: 50%; transform: translate(-50%, -52%);
+  width: 840px; text-align: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.5s ease;
+  z-index: 20;
+  background: rgba(0,0,0,0.80);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(128,204,166,0.20);
+  border-top: 2px solid rgba(128,204,166,0.40);
+  padding: 36px 56px 32px;
+}
+.rare-banner.active { opacity: 1; }
+.rare-banner .rb-cat {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.40em;
+  text-transform: uppercase; color: var(--rare-dim);
+  padding-bottom: 14px; margin-bottom: 18px;
+  border-bottom: 1px solid rgba(128,204,166,0.15);
+  text-shadow: var(--t2shadow);
+}
+/* Main event line — TIER 1 weight */
+.rare-banner .rb-main {
+  font-size: 24px; font-weight: 700; letter-spacing: 0.03em;
+  color: var(--ink); line-height: 1.4;
+  text-shadow: var(--t1shadow);
+}
+.rare-banner .rb-sub {
+  font-size: 14px; font-weight: 400; color: var(--ink-2);
+  margin-top: 12px; letter-spacing: 0.04em; line-height: 1.5;
+  text-shadow: var(--t2shadow);
+}
+.rare-banner .rb-ts {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.24em;
+  text-transform: uppercase; color: var(--rare-dim);
+  margin-top: 20px; text-shadow: var(--t3shadow);
+}
 </style>
 </head>
 <body>
 <div class="overlay">
 
+  <!-- Structural panels -->
+  <div class="panel-header"></div>
+  <div class="panel-left"></div>
+  <div class="panel-right"></div>
+  <div class="panel-bottom"></div>
+
+  <!-- Corner ticks -->
   <div class="tick tl"></div><div class="tick tr"></div>
   <div class="tick bl"></div><div class="tick br"></div>
-  <div class="hairline top"></div>
-  <div class="hairline bot"></div>
 
-  <!-- NOAA alert bar (hidden until active) -->
+  <!-- NOAA -->
   <div class="noaa-bar" id="noaa-bar">
-    <span class="nb-label">NWS Advisory</span>
-    <span class="nb-text" id="noaa-text">—</span>
+    <span class="nb-lbl">NWS Advisory</span>
+    <span class="nb-txt" id="noaa-text">—</span>
   </div>
 
-  <!-- Masthead -->
+  <!-- Header: identity -->
   <div class="masthead">
     <div class="seal">Field Station · Roscommon Co. · Michigan</div>
     <div class="title">Northern Michigan's Backyard</div>
     <div class="sub">Continuous Forest Observation</div>
   </div>
 
-  <!-- LED -->
   <div class="led" id="led">
     <span class="dot"></span>
     <span id="led-label">Monitoring</span>
   </div>
 
-  <!-- Station -->
+  <!-- Header: clock -->
   <div class="station">
     <div class="clock" id="clock">—</div>
-    <div class="meta"><span class="lbl">Lat</span> 44.48°N &nbsp;<span class="lbl">Lon</span> 84.72°W</div>
-    <div class="meta"><span class="lbl">Elev</span> 1,153 ft &nbsp;<span class="lbl">Day</span> <span id="doy">—</span></div>
-    <div class="session-count" id="session-count">Session: 0h 0m</div>
+    <div class="dateline" id="dateline">—</div>
+    <div class="coords">44.48°N · 84.72°W · 1,153 ft</div>
+    <div class="session" id="session">—</div>
   </div>
 
-  <!-- Astro strip -->
+  <!-- Astro -->
   <div class="astro-strip" id="astro-strip">
     <div class="lbl" id="astro-lbl">—</div>
     <div class="val" id="astro-val">—</div>
   </div>
 
-  <!-- Left readings: Solar + Weather -->
+  <!-- Left: solar / lunar / forest (Tier 3 — context) -->
   <div class="readings">
-    <div class="reading">
-      <div class="lbl">Solar Position</div>
+    <div class="reading" id="r-solar">
+      <div class="lbl">Solar</div>
       <div class="val" id="sun-alt">—</div>
-      <div class="val small" id="sun-az">—</div>
+      <div class="val sub" id="sun-az">—</div>
     </div>
-    <div class="reading">
+    <div class="reading" id="r-light">
       <div class="lbl">Light Phase</div>
       <div class="val" id="light-phase">—</div>
-      <div class="val small" id="light-next">—</div>
+      <div class="val sub" id="light-next">—</div>
     </div>
-    <div class="reading">
+    <div class="reading" id="r-daylight">
       <div class="lbl">Daylight</div>
       <div class="val" id="daylight">—</div>
-      <div class="val small" id="daylight-delta">—</div>
+      <div class="val sub" id="daylight-delta">—</div>
     </div>
-    <div class="reading">
+    <div class="reading" id="r-lunar">
       <div class="lbl">Lunar</div>
       <div class="val" id="moon-phase">—</div>
-      <div class="val small" id="moon-illum">—</div>
+      <div class="val sub" id="moon-illum">—</div>
     </div>
-    <div class="reading">
+    <div class="reading" id="r-forest">
       <div class="lbl">Forest Condition</div>
       <div class="val" id="forest-state">—</div>
-      <div class="val small" id="forest-sub">—</div>
+      <div class="val sub" id="forest-sub">—</div>
     </div>
   </div>
 
-  <!-- Right readings: Weather + Species -->
+  <!-- Right: weather / feeder / species (Tier 2 — active) -->
   <div class="inferred">
-    <div class="reading">
-      <div class="lbl">Air</div>
+    <div class="reading-r" id="r-air">
+      <div class="lbl">Air Temperature</div>
       <div class="val" id="air-temp">—</div>
-      <div class="val small" id="air-feels">—</div>
+      <div class="val sub" id="air-feels">—</div>
     </div>
-    <div class="reading">
+    <div class="reading-r" id="r-wind">
       <div class="lbl">Wind</div>
       <div class="val" id="wind">—</div>
-      <div class="val small" id="wind-state">—</div>
+      <div class="val sub" id="wind-state">—</div>
     </div>
-    <div class="reading">
-      <div class="lbl">Sky / Pressure</div>
+    <div class="reading-r" id="r-sky">
+      <div class="lbl">Sky · Pressure</div>
       <div class="val" id="sky">—</div>
-      <div class="val small" id="pressure">—</div>
+      <div class="val sub" id="pressure">—</div>
     </div>
-    <div class="reading">
-      <div class="lbl">Feeder</div>
-      <div class="val" id="feeder-inline">—</div>
-      <div class="val small" id="feeder-sub">—</div>
+    <div class="reading-r" id="r-feeder">
+      <div class="lbl">Feeder Status</div>
+      <div class="val" id="feeder-val">—</div>
+      <div class="val sub" id="feeder-sub">—</div>
     </div>
-    <div class="reading">
-      <div class="lbl">Species · Recently Observed</div>
+    <div class="reading-r" id="r-species">
+      <div class="lbl">Species · Recent Observations</div>
       <div class="species-list" id="species">—</div>
     </div>
   </div>
 
-  <!-- Rare event banner (center, fires on events) -->
+  <!-- Rare event banner -->
   <div class="rare-banner" id="rare-banner">
-    <div class="rb-label" id="rb-label">—</div>
+    <div class="rb-cat" id="rb-cat">—</div>
     <div class="rb-main" id="rb-main">—</div>
     <div class="rb-sub" id="rb-sub">—</div>
-    <div class="rb-timestamp" id="rb-timestamp">—</div>
+    <div class="rb-ts" id="rb-ts">—</div>
   </div>
 
-  <!-- Bottom left: Event echoes -->
+  <!-- Bottom: echo log -->
   <div class="echo">
-    <div class="lbl">Recent Observations</div>
-    <div class="line" id="echo-1">Observation window open</div>
-    <div class="line" id="echo-2">—</div>
+    <div class="lbl">Event Log</div>
+    <div class="ev-type" id="ev-type">Observation window open</div>
+    <div class="ev-detail" id="ev-detail">No events recorded this session</div>
+    <div class="ev-ago" id="ev-ago">—</div>
+    <div class="ev-session" id="ev-session">Session · 0h 00m</div>
   </div>
 
-  <!-- Bottom center: Elder voice -->
+  <!-- Bottom: elder voice -->
   <div class="elder">
     <div class="mark">Field Note</div>
     <div class="line" id="elder-line">—</div>
   </div>
 
-  <!-- Bottom right: Cycling + phenology -->
+  <!-- Bottom: cycling -->
   <div class="cycling">
     <div class="lbl">Observation</div>
     <div class="line" id="cycling-line">—</div>
-    <div class="phenology" id="phenology-line"></div>
+    <div class="pheno" id="pheno-line"></div>
   </div>
 
 </div>
 <script>
 /* ================================================================
-   NORTHERN MICHIGAN'S BACKYARD — OBSERVATION OVERLAY v2
-   ================================================================
-   One cam, one forest scene.
-   Real APIs: Open-Meteo, NOAA alerts, ISS (open-notify).
-   Computed: SunCalc solar/lunar.
-   Optional: eBird (add key below).
-   Elder voice: Netlify function -> Claude API.
+   NORTHERN MICHIGAN'S BACKYARD v4
+   Hierarchy-first. Interpreted language. System rhythm.
    ================================================================ */
 
-// ── CONFIG ──────────────────────────────────────────────────────
-const LAT = 44.48;
-const LON = -84.72;
-const LON_POS = Math.abs(LON);
+const LAT = 44.48, LON = -84.72;
 const LOCATION_NAME = 'Higgins Lake, Roscommon County, Michigan';
 const ELDER_ENDPOINT = '/.netlify/functions/elder-voice';
-const EBIRD_KEY = ''; // https://ebird.org/api/keygen (free)
-const NOAA_ZONE = 'MIZ037'; // Roscommon County NWS zone
+const EBIRD_KEY = '';
+const NOAA_ZONE = 'MIZ037';
 
-// ── STATE ────────────────────────────────────────────────────────
 const state = {
   weather: null,
   species: [],
   elderPool: [],
   lastElderIdx: -1,
   lastCyclingIdx: -1,
+  lastCyclingType: null,
   lastEchoAt: null,
-  lastEchoText: null,
+  lastEchoEvent: null,
   lastRareAt: null,
-  lastRareText: null,
-  feederQuietSince: Date.now() - 1000 * 60 * Math.floor(Math.random() * 40 + 5),
+  feederQuietSince: Date.now() - 1000*60*(20+Math.floor(Math.random()*40)),
   feederActive: false,
   sessionStart: Date.now(),
-  noaaAlerts: [],
-  rareEventLog: [],
   pressureTrend: [],
+  rareLog: [],
+  rhythmPhase: 0, // drives element recede cycles
 };
 
 // ================================================================
-// 1. CLOCK + SESSION
+// 1. CLOCK + SESSION + RHYTHM
 // ================================================================
 function updateClock() {
   const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
+  const p = n => String(n).padStart(2,'0');
   document.getElementById('clock').textContent =
-    `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+    `${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`;
 
-  const start = new Date(now.getFullYear(),0,0);
-  document.getElementById('doy').textContent =
-    Math.floor((now - start) / 86400000);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const doy = Math.floor((now - new Date(now.getFullYear(),0,0)) / 86400000);
+  document.getElementById('dateline').textContent =
+    `${days[now.getDay()]} · ${months[now.getMonth()]} ${now.getDate()} · Day ${doy}`;
 
   const elapsed = (Date.now() - state.sessionStart) / 1000;
-  const h = Math.floor(elapsed/3600);
-  const m = Math.floor((elapsed%3600)/60);
-  document.getElementById('session-count').textContent =
-    `Session: ${h}h ${String(m).padStart(2,'0')}m`;
+  const h = Math.floor(elapsed/3600), m = Math.floor((elapsed%3600)/60);
+  document.getElementById('session').textContent =
+    `Session · ${h}h ${String(m).padStart(2,'0')}m`;
 
-  applyOvernightMode(now.getHours());
-}
-setInterval(updateClock, 1000);
-updateClock();
+  document.getElementById('ev-session').textContent =
+    `Session · ${h}h ${String(m).padStart(2,'0')}m continuous`;
 
-function applyOvernightMode(h) {
-  const overnight = h >= 22 || h < 5;
+  const overnight = now.getHours() >= 22 || now.getHours() < 5;
   document.body.classList.toggle('overnight', overnight);
   document.getElementById('led-label').textContent =
     overnight ? 'Low-light monitoring' : 'Monitoring';
 }
+setInterval(updateClock, 1000);
+updateClock();
 
 // ================================================================
-// 2. SOLAR + LUNAR
+// 2. SYSTEM RHYTHM — quiet unpredictability
+// Periodically recedes lower-priority readings, then restores them.
+// Creates depth without turning anything off.
+// ================================================================
+const RECEDE_CANDIDATES = ['r-solar','r-lunar','r-daylight','r-light'];
+let recedeActive = [];
+
+function runRhythm() {
+  // Restore anything that's been receded
+  recedeActive.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('receded');
+  });
+  recedeActive = [];
+
+  // Randomly recede 1-2 Tier 3 elements for a window
+  if (Math.random() > 0.45) {
+    const shuffled = [...RECEDE_CANDIDATES].sort(()=>Math.random()-0.5);
+    const count = Math.random() > 0.6 ? 2 : 1;
+    recedeActive = shuffled.slice(0, count);
+    recedeActive.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.classList.add('receded');
+    });
+  }
+
+  // Schedule next rhythm event: 4-9 minutes
+  const delay = (240 + Math.random()*300) * 1000;
+  setTimeout(runRhythm, delay);
+}
+// Start rhythm after 3 min warmup
+setTimeout(runRhythm, 3 * 60 * 1000);
+
+// ================================================================
+// 3. SOLAR + LUNAR
 // ================================================================
 function updateSolar() {
   const now = new Date();
@@ -533,17 +644,16 @@ function updateSolar() {
   const times = SunCalc.getTimes(now, LAT, LON);
   const moon = SunCalc.getMoonIllumination(now);
 
-  const altDeg = sun.altitude * 180 / Math.PI;
-  const azDeg = (sun.azimuth * 180 / Math.PI + 180) % 360;
+  const alt = sun.altitude * 180 / Math.PI;
+  const az = (sun.azimuth * 180 / Math.PI + 180) % 360;
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
 
   document.getElementById('sun-alt').textContent =
-    `${altDeg >= 0 ? '+' : ''}${altDeg.toFixed(1)}°`;
-
-  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+    `${alt >= 0 ? '+' : ''}${alt.toFixed(1)}°`;
   document.getElementById('sun-az').textContent =
-    `azimuth ${azDeg.toFixed(0)}° · ${dirs[Math.round(azDeg/22.5)%16]}`;
+    `Azimuth ${az.toFixed(0)}° · ${dirs[Math.round(az/22.5)%16]}`;
 
-  const phase = lightPhase(altDeg, now, times);
+  const phase = lightPhase(alt, now, times);
   document.getElementById('light-phase').textContent = phase.name;
   document.getElementById('light-next').textContent = phase.next;
 
@@ -552,28 +662,29 @@ function updateSolar() {
   const delta = todayLen - (yTimes.sunset - yTimes.sunrise) / 1000;
   document.getElementById('daylight').textContent = fmtDur(todayLen);
   document.getElementById('daylight-delta').textContent =
-    `${delta >= 0 ? '+' : '−'}${fmtDur(Math.abs(delta))} from yesterday`;
+    `${delta >= 0 ? '+' : '−'}${fmtDur(Math.abs(delta))} from previous day`;
 
   document.getElementById('moon-phase').textContent = moonName(moon.phase);
   document.getElementById('moon-illum').textContent =
-    `${(moon.fraction*100).toFixed(0)}% illuminated`;
+    `${(moon.fraction*100).toFixed(0)}% illuminated · ${moonActivityNote(moon.phase)}`;
 }
 
 function lightPhase(alt, now, times) {
   const t = now.getTime();
-  if (alt < -12) return { name:'Night', next: nextLbl(times.astronomicalDawn,t,'dawn') };
-  if (alt < -6)  return { name:'Astronomical twilight', next: nextLbl(times.nauticalDawn,t,'nautical dawn') };
+  if (alt < -12) return { name:'Night · below horizon', next: nxtLbl(times.astronomicalDawn,t,'astronomical dawn') };
+  if (alt < -6)  return { name:'Astronomical twilight', next: nxtLbl(times.nauticalDawn,t,'nautical dawn') };
   if (alt < -0.833) {
     const pre = now < times.solarNoon;
     return { name: pre ? 'Civil twilight — pre-dawn' : 'Civil twilight — dusk',
-             next: pre ? nextLbl(times.sunrise,t,'sunrise') : nextLbl(times.night,t,'night') };
+             next: pre ? nxtLbl(times.sunrise,t,'sunrise') : nxtLbl(times.night,t,'night') };
   }
-  if (alt < 6)  return { name:'Golden hour', next:'transitional light' };
-  if (alt < 20) return { name:'Low sun', next:'mid-day approach' };
-  if (alt < 40) return { name:'Mid sun', next:'approaching noon' };
-  return { name:'Solar maximum', next:'descent begins' };
+  if (alt < 6)  return { name:'Golden hour · transitional light', next:'direct light developing' };
+  if (alt < 20) return { name:'Low sun · long shadow angle', next:'mid-day approach' };
+  if (alt < 40) return { name:'Mid sun · shadows shortening', next:'approaching solar maximum' };
+  return { name:'Solar maximum', next:'descent begins · shadows lengthening' };
 }
-function nextLbl(target, now, label) {
+
+function nxtLbl(target, now, label) {
   if (!target||isNaN(target)) return '—';
   const d = target - now;
   if (d < 0) return `${label} passed`;
@@ -581,8 +692,7 @@ function nextLbl(target, now, label) {
 }
 function fmtDur(sec) {
   const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60);
-  if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m`;
-  return `${m}m`;
+  return h > 0 ? `${h}h ${String(m).padStart(2,'0')}m` : `${m}m`;
 }
 function moonName(p) {
   if (p<0.03||p>0.97) return 'New moon';
@@ -594,46 +704,23 @@ function moonName(p) {
   if (p<0.78) return 'Last quarter';
   return 'Waning crescent';
 }
+function moonActivityNote(p) {
+  if (p > 0.45 && p < 0.55) return 'nocturnal activity elevated';
+  if (p < 0.1 || p > 0.9) return 'low nocturnal visibility';
+  return 'moderate nocturnal light';
+}
+
 setInterval(updateSolar, 30000);
 updateSolar();
 
 // ================================================================
-// 3. FOREST CONDITION (inferred from time + weather)
+// 4. WEATHER — interpreted language
 // ================================================================
-function updateForestCondition() {
-  const h = new Date().getHours();
-  const w = state.weather;
-  const wind = w ? w.wind_speed_10m : 0;
-  const cloud = w ? w.cloud_cover : 50;
-
-  let canopy = 'still';
-  if (wind > 15) canopy = 'active / sustained movement';
-  else if (wind > 8) canopy = 'moderate movement';
-  else if (wind > 3) canopy = 'light stirring';
-  else canopy = 'still';
-
-  let light = 'flat diffuse';
-  if (cloud < 20) light = h > 6 && h < 20 ? 'direct / high contrast' : 'clear ambient';
-  else if (cloud < 50) light = 'partly filtered';
-  else if (cloud < 80) light = 'diffuse / soft';
-  else light = 'overcast / flat';
-
-  let understory = 'quiet';
-  if (h >= 5 && h < 8)   understory = 'waking / dawn activity';
-  else if (h >= 8 && h < 11) understory = 'moderate activity';
-  else if (h >= 11 && h < 14) understory = 'reduced / midday lull';
-  else if (h >= 14 && h < 17) understory = 'building again';
-  else if (h >= 17 && h < 20) understory = 'active / pre-dusk';
-  else understory = 'quiet / nocturnal transition';
-
-  document.getElementById('forest-state').textContent = `Canopy: ${canopy}`;
-  document.getElementById('forest-sub').textContent = `Light: ${light} · Understory: ${understory}`;
+function compassDir(deg) {
+  const d=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return d[Math.round(deg/22.5)%16];
 }
-setInterval(updateForestCondition, 60000);
 
-// ================================================================
-// 4. WEATHER (Open-Meteo)
-// ================================================================
 async function updateWeather() {
   try {
     const url = `https://api.open-meteo.com/v1/forecast`
@@ -644,204 +731,225 @@ async function updateWeather() {
       + `&temperature_unit=fahrenheit&wind_speed_unit=mph`
       + `&timezone=America%2FDetroit`;
     const r = await fetch(url);
-    const data = await r.json();
-    const c = data.current;
+    const d = await r.json();
+    const c = d.current;
     state.weather = c;
 
-    // Track pressure trend (for elder voice + feeder context)
     state.pressureTrend.push({ t: Date.now(), p: c.pressure_msl });
-    if (state.pressureTrend.length > 6) state.pressureTrend.shift();
+    if (state.pressureTrend.length > 8) state.pressureTrend.shift();
 
     document.getElementById('air-temp').textContent = `${c.temperature_2m.toFixed(0)}°F`;
     document.getElementById('air-feels').textContent =
-      `feels ${c.apparent_temperature.toFixed(0)}° · ${c.relative_humidity_2m}% RH`;
+      `Apparent ${c.apparent_temperature.toFixed(0)}° · ${c.relative_humidity_2m}% relative humidity`;
 
-    const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-    const wdir = dirs[Math.round(c.wind_direction_10m/22.5)%16];
+    const wdir = compassDir(c.wind_direction_10m);
+    const wspd = c.wind_speed_10m;
     document.getElementById('wind').textContent =
-      c.wind_speed_10m < 1 ? 'Calm' : `${c.wind_speed_10m.toFixed(0)} mph ${wdir}`;
-    document.getElementById('wind-state').textContent =
-      windLabel(c.wind_speed_10m, c.wind_gusts_10m);
+      wspd < 1 ? 'Calm — no surface movement' : `${wspd.toFixed(0)} mph · ${wdir}`;
+    document.getElementById('wind-state').textContent = windInterp(wspd, c.wind_gusts_10m, wdir);
 
-    document.getElementById('sky').textContent = skyLabel(c.weather_code, c.cloud_cover);
+    document.getElementById('sky').textContent = skyInterp(c.weather_code, c.cloud_cover);
     document.getElementById('pressure').textContent =
-      `${(c.pressure_msl*0.02953).toFixed(2)} inHg · ${pressureTrendLabel()}`;
+      `${(c.pressure_msl*0.02953).toFixed(2)} inHg · ${pressureTrendInterp()}`;
 
-    updateForestCondition();
+    updateForest(c);
   } catch(e) { console.warn('Weather:', e); }
 }
-function windLabel(mph, g) {
-  if (mph<1) return 'Surface flat / no perceptible movement';
-  if (mph<4) return 'Barely perceptible at leaf level';
-  if (mph<8) return 'Leaves stirring';
-  if (mph<13) return 'Small branches responding';
-  if (mph<19) return 'Canopy in sustained motion';
-  if (mph<25) return 'Trees swaying, debris possible';
-  return g>35 ? 'Strong gusts / intermittent' : 'Pronounced sustained movement';
+
+// Interpreted wind language
+function windInterp(mph, g, dir) {
+  if (mph < 1) return 'Surface flat — thermal drift only';
+  if (mph < 4) return 'Barely perceptible at leaf level';
+  if (mph < 8) return `Light movement — foliage responding to ${dir} flow`;
+  if (mph < 13) return 'Small branches active — sustained canopy influence';
+  if (mph < 19) return 'Canopy in continuous motion — surface noise elevated';
+  if (mph < 25) return 'Significant wind — tree movement pronounced';
+  return g > 35 ? `Strong gusts to ${g.toFixed(0)} mph — intermittent disruption` : 'Sustained strong wind — movement across all layers';
 }
-function skyLabel(code, cloud) {
-  if ([0].includes(code)) return 'Clear';
-  if ([1].includes(code)) return 'Mainly clear';
-  if ([2].includes(code)) return 'Partly cloudy';
-  if ([3].includes(code)) return 'Overcast';
-  if ([45,48].includes(code)) return 'Fog';
-  if ([51,53,55,56,57].includes(code)) return 'Drizzle';
-  if ([61,63,65,66,67,80,81,82].includes(code)) return 'Rain';
-  if ([71,73,75,77,85,86].includes(code)) return 'Snow';
-  if ([95,96,99].includes(code)) return 'Thunderstorm';
+
+// Interpreted sky language
+function skyInterp(code, cloud) {
+  if ([0].includes(code)) return `Clear — stable atmospheric pattern`;
+  if ([1].includes(code)) return 'Mainly clear — light pressure dominant';
+  if ([2].includes(code)) return `Partly cloudy — ${cloud}% cover, variable light`;
+  if ([3].includes(code)) return 'Overcast — flat diffuse light throughout';
+  if ([45,48].includes(code)) return 'Fog — visibility reduced, sound carries further';
+  if ([51,53,55].includes(code)) return 'Drizzle — feeder activity typically decreases';
+  if ([61,63,65,80,81,82].includes(code)) return 'Rain — wildlife movement suppressed';
+  if ([71,73,75,77,85,86].includes(code)) return 'Snow — ground activity increases, feeder demand elevated';
+  if ([95,96,99].includes(code)) return 'Thunderstorm — all activity suspended';
   return `${cloud}% cloud cover`;
 }
-function pressureTrendLabel() {
-  if (state.pressureTrend.length < 2) return 'stable';
-  const first = state.pressureTrend[0].p;
-  const last = state.pressureTrend[state.pressureTrend.length-1].p;
-  const d = last - first;
-  if (d > 1.5) return 'rising';
-  if (d < -1.5) return 'falling';
-  return 'stable';
+
+function pressureTrendInterp() {
+  if (state.pressureTrend.length < 2) return 'trend establishing';
+  const d = state.pressureTrend[state.pressureTrend.length-1].p - state.pressureTrend[0].p;
+  if (d > 2) return 'rising — conditions stabilizing';
+  if (d < -2) return 'falling — front approaching';
+  if (d < -0.8) return 'slight decline — monitor';
+  return 'stable — no pressure change detected';
 }
+
+function updateForest(c) {
+  const h = new Date().getHours();
+  const mph = c ? c.wind_speed_10m : 0;
+  const cloud = c ? c.cloud_cover : 50;
+
+  let canopy;
+  if (mph < 1) canopy = 'Canopy still — thermal draft possible';
+  else if (mph < 5) canopy = 'Canopy barely moving — occasional light stir';
+  else if (mph < 10) canopy = 'Light canopy movement — upper branches active';
+  else if (mph < 18) canopy = 'Moderate canopy motion — wind-driven throughout';
+  else canopy = 'Active canopy — sustained movement all layers';
+
+  let light;
+  if (cloud < 15) light = 'Direct light — high contrast, hard shadows';
+  else if (cloud < 40) light = 'Filtered light — soft shadows, variable';
+  else if (cloud < 75) light = 'Diffuse light — reduced contrast';
+  else light = 'Flat overcast — minimal shadow, even exposure';
+
+  let understory;
+  if (h >= 5 && h < 7)    understory = 'Understory waking — dawn transition';
+  else if (h >= 7 && h < 11) understory = 'Understory active — peak morning window';
+  else if (h >= 11 && h < 14) understory = 'Understory reduced — midday lull typical';
+  else if (h >= 14 && h < 17) understory = 'Understory increasing — afternoon build';
+  else if (h >= 17 && h < 20) understory = 'Understory active — pre-dusk window';
+  else understory = 'Understory quiet — nocturnal transition';
+
+  document.getElementById('forest-state').textContent = canopy;
+  document.getElementById('forest-sub').textContent = `${light} · ${understory}`;
+}
+
 updateWeather();
 setInterval(updateWeather, 10*60*1000);
 
 // ================================================================
-// 5. FEEDER STATUS ARC
+// 5. FEEDER STATUS — interpreted arc
 // ================================================================
 function updateFeeder() {
-  const quietMs = Date.now() - state.feederQuietSince;
-  const quietMin = Math.floor(quietMs / 60000);
+  const quietMin = Math.floor((Date.now() - state.feederQuietSince) / 60000);
   const h = new Date().getHours();
+  const peakWindow = (h>=5&&h<8) || (h>=16&&h<19);
 
-  // Simulate occasional feeder traffic bursts based on time of day
-  // Dawn (5-8) and dusk (16-19) have higher probability of activity
-  const activityProb = (h>=5&&h<8||h>=16&&h<19) ? 0.35 : 0.12;
-  if (!state.feederActive && Math.random() < activityProb / 60) {
+  // Probabilistic activity simulation
+  if (!state.feederActive && Math.random() < (peakWindow ? 0.35 : 0.10) / 60) {
     state.feederActive = true;
     setTimeout(() => {
       state.feederActive = false;
       state.feederQuietSince = Date.now();
-    }, (30 + Math.random()*90) * 1000); // active 30-120s
+    }, (20 + Math.random()*100) * 1000);
   }
 
-  const statusEl = document.getElementById('feeder-inline');
+  const valEl = document.getElementById('feeder-val');
   const subEl = document.getElementById('feeder-sub');
 
   if (state.feederActive) {
-    statusEl.textContent = 'Active';
-    statusEl.className = 'val accent';
-    subEl.textContent = 'Traffic in progress';
+    valEl.textContent = 'Activity in progress';
+    valEl.className = 'val accent';
+    subEl.textContent = 'Traffic registered — species sequence ongoing';
+    subEl.className = 'val sub';
   } else {
-    statusEl.textContent = `Quiet · ${quietMin}m`;
-    statusEl.className = 'val';
-    // Anticipation context
-    if (quietMin > 45) {
-      subEl.textContent = 'Extended quiet · arrival burst possible';
-    } else if (quietMin > 20) {
-      subEl.textContent = 'Below typical for this hour';
+    const isLong = quietMin > 50;
+    const isMid = quietMin > 25;
+    valEl.textContent = `Quiet · ${quietMin}m`;
+    valEl.className = quietMin > 40 ? 'val dimmed' : 'val';
+
+    if (isLong) {
+      subEl.textContent = `Below expected range for this hour — arrival burst possible`;
+    } else if (isMid) {
+      subEl.textContent = `Inter-visit interval extending — within normal range`;
+    } else if (peakWindow) {
+      subEl.textContent = `Within active window — traffic probability elevated`;
     } else {
-      subEl.textContent = 'Normal inter-visit interval';
+      subEl.textContent = `Normal inter-visit interval for this period`;
     }
+    subEl.className = 'val sub';
   }
 }
 setInterval(updateFeeder, 15000);
 updateFeeder();
 
 // ================================================================
-// 6. NOAA WEATHER ALERTS
+// 6. NOAA
 // ================================================================
 async function updateNOAA() {
   try {
-    const url = `https://api.weather.gov/alerts/active?zone=${NOAA_ZONE}`;
-    const r = await fetch(url, { headers: { 'Accept':'application/geo+json','User-Agent':'backyard-overlay/2.0' }});
-    const data = await r.json();
-    const alerts = (data.features||[]).filter(f =>
-      ['Warning','Watch','Advisory'].some(t => f.properties.event.includes(t))
-    );
-    state.noaaAlerts = alerts;
+    const r = await fetch(`https://api.weather.gov/alerts/active?zone=${NOAA_ZONE}`,
+      { headers: { 'Accept':'application/geo+json','User-Agent':'backyard-overlay/4.0' }});
+    const d = await r.json();
+    const alerts = (d.features||[]).filter(f =>
+      ['Warning','Watch','Advisory'].some(t => f.properties.event.includes(t)));
     const bar = document.getElementById('noaa-bar');
     const led = document.getElementById('led');
-    if (alerts.length > 0) {
-      const evt = alerts[0].properties.event;
-      document.getElementById('noaa-text').textContent = evt.toUpperCase();
+    if (alerts.length) {
+      document.getElementById('noaa-text').textContent = alerts[0].properties.event.toUpperCase();
       bar.classList.add('active');
       led.classList.add('alert-mode');
     } else {
       bar.classList.remove('active');
       led.classList.remove('alert-mode');
     }
-  } catch(e) { console.warn('NOAA:', e); }
+  } catch(e) { /* silent */ }
 }
 updateNOAA();
 setInterval(updateNOAA, 15*60*1000);
 
 // ================================================================
-// 7. ISS PASS (open-notify.org — free, no key)
+// 7. ISS
 // ================================================================
 async function checkISS() {
   try {
-    const url = `https://api.open-notify.org/iss-pass.json?lat=${LAT}&lon=${LON}&n=2`;
-    const r = await fetch(url);
-    const data = await r.json();
-    const passes = (data.response||[]);
-    if (!passes.length) return;
-    const next = passes[0];
-    const riseMs = next.risetime * 1000;
-    const now = Date.now();
-    const diffMin = Math.round((riseMs - now) / 60000);
+    const r = await fetch(`https://api.open-notify.org/iss-pass.json?lat=${LAT}&lon=${LON}&n=2`);
+    const d = await r.json();
+    const passes = d.response || [];
     const strip = document.getElementById('astro-strip');
-    const lbl = document.getElementById('astro-lbl');
-    const val = document.getElementById('astro-val');
+    if (!passes.length) { strip.classList.remove('visible'); return; }
+    const diffMin = Math.round((passes[0].risetime * 1000 - Date.now()) / 60000);
     if (diffMin >= 0 && diffMin < 90) {
-      lbl.textContent = 'ISS Pass';
-      val.textContent = diffMin < 5 ? 'In progress' : `In ${diffMin} min`;
+      document.getElementById('astro-lbl').textContent = 'ISS Pass';
+      document.getElementById('astro-val').textContent =
+        diffMin < 3 ? 'Pass in progress' : `Overhead in ${diffMin} min`;
       strip.classList.add('visible');
     } else {
       strip.classList.remove('visible');
     }
-  } catch(e) { /* silent — ISS API sometimes unreachable */ }
+  } catch(e) { /* silent */ }
 }
 checkISS();
-setInterval(checkISS, 20*60*1000);
+setInterval(checkISS, 18*60*1000);
 
 // ================================================================
-// 8. ASTRONOMY EVENTS (hardcoded annual calendar)
+// 8. ASTRONOMY
 // ================================================================
-const ASTRO_EVENTS = [
-  { month:1, day:3, window:3, label:'Quadrantid Meteor Shower', note:'peak rate ~110/hr at midnight' },
-  { month:4, day:22, window:3, label:'Lyrid Meteor Shower', note:'peak rate ~18/hr' },
-  { month:5, day:6, window:3, label:'Eta Aquariid Shower', note:'pre-dawn northeastern sky' },
-  { month:6, day:21, window:1, label:'Summer Solstice', note:'longest day of year at this latitude' },
-  { month:7, day:30, window:3, label:'Delta Aquariid Shower', note:'southern sky, post-midnight' },
-  { month:8, day:12, window:5, label:'Perseid Meteor Shower', note:'peak rate ~100/hr · best viewing 2–4am' },
-  { month:9, day:22, window:1, label:'Autumnal Equinox', note:'day and night equal duration' },
-  { month:10, day:8, window:3, label:'Draconid Shower', note:'early evening, northern sky' },
-  { month:10, day:21, window:3, label:'Orionid Shower', note:'peak rate ~20/hr' },
-  { month:11, day:17, window:3, label:'Leonid Shower', note:'peak rate ~15/hr' },
-  { month:12, day:13, window:3, label:'Geminid Shower', note:'brightest shower of year · ~120/hr' },
-  { month:12, day:21, window:1, label:'Winter Solstice', note:'shortest day of year at this latitude' },
+const ASTRO = [
+  {m:1,d:3,w:3,l:'Quadrantid Meteor Shower',n:'peak ~110/hr · midnight'},
+  {m:4,d:22,w:3,l:'Lyrid Meteor Shower',n:'peak ~18/hr'},
+  {m:5,d:6,w:3,l:'Eta Aquariid Shower',n:'pre-dawn · northeastern sky'},
+  {m:6,d:21,w:1,l:'Summer Solstice',n:'longest day of year at this latitude'},
+  {m:8,d:12,w:5,l:'Perseid Meteor Shower',n:'peak ~100/hr · best 2–4am'},
+  {m:9,d:22,w:1,l:'Autumnal Equinox',n:'day and night equal duration'},
+  {m:10,d:8,w:3,l:'Draconid Shower',n:'evening · northern sky'},
+  {m:10,d:21,w:3,l:'Orionid Shower',n:'peak ~20/hr'},
+  {m:11,d:17,w:3,l:'Leonid Shower',n:'peak ~15/hr'},
+  {m:12,d:13,w:3,l:'Geminid Shower',n:'brightest annual shower · ~120/hr'},
+  {m:12,d:21,w:1,l:'Winter Solstice',n:'shortest day of year at this latitude'},
 ];
-
-function checkAstroEvents() {
-  const now = new Date();
-  const m = now.getMonth()+1, d = now.getDate();
+function checkAstro() {
   const strip = document.getElementById('astro-strip');
-  const lbl = document.getElementById('astro-lbl');
-  const val = document.getElementById('astro-val');
-
-  // Don't overwrite ISS pass if active
   if (strip.classList.contains('visible')) return;
-
-  const match = ASTRO_EVENTS.find(e => e.month===m && Math.abs(e.day-d)<=e.window);
-  if (match) {
-    lbl.textContent = match.label;
-    val.textContent = match.note;
+  const now = new Date(), mo = now.getMonth()+1, da = now.getDate();
+  const hit = ASTRO.find(e => e.m===mo && Math.abs(e.d-da)<=e.w);
+  if (hit) {
+    document.getElementById('astro-lbl').textContent = hit.l;
+    document.getElementById('astro-val').textContent = hit.n;
     strip.classList.add('visible');
   }
 }
-checkAstroEvents();
-setInterval(checkAstroEvents, 60*60*1000);
+checkAstro();
+setInterval(checkAstro, 60*60*1000);
 
 // ================================================================
-// 9. SPECIES (eBird optional)
+// 9. SPECIES
 // ================================================================
 const SPECIES_SEED = [
   'Black-capped Chickadee','White-breasted Nuthatch','Downy Woodpecker',
@@ -852,8 +960,7 @@ async function updateSpecies() {
   try {
     const r = await fetch(
       `https://api.ebird.org/v2/data/obs/geo/recent?lat=${LAT}&lng=${LON}&dist=15&back=3`,
-      { headers:{'X-eBirdApiToken':EBIRD_KEY} }
-    );
+      { headers:{'X-eBirdApiToken':EBIRD_KEY} });
     const data = await r.json();
     const names = [...new Set(data.map(d=>d.comName))].slice(0,7);
     const fresh = names.filter(n=>!state.species.includes(n));
@@ -869,16 +976,46 @@ updateSpecies();
 setInterval(updateSpecies, 20*60*1000);
 
 // ================================================================
-// 10. EVENT ECHOES (Tier 4 — implied memory)
+// 10. EVENT LOG — structured, interpreted
 // ================================================================
 const ECHO_POOL = {
-  night:      ['Stillness holding','Owl vocalization — far northeast','Deer crossing — lower trail','No registered canopy movement'],
-  dawn:       ['First chorus registered','Ground activity at base of feeders','Surface mist — low elevation','Squirrel emergence — eastern perimeter'],
-  morning:    ['Chickadee rotation — feeder','Crow vocalization — distant northwest','Woodpecker drumming — mid canopy','Jay intrusion — brief'],
-  midday:     ['Raptor silhouette — high thermal','Feeder lull — normal midday pattern','Canopy movement — wind-driven','No ground activity registered'],
-  afternoon:  ['Shadow shift noted — western face','Understory movement increasing','Nuthatch descending — trunk foraging','Wind direction change — northwest'],
-  dusk:       ['Evening approach — understory active','Last jay departure logged','Ambient light: below threshold','Surface calm established'],
+  night:      [
+    {type:'Stillness registered', detail:'No movement detected · ground and canopy', loc:'perimeter'},
+    {type:'Owl vocalization', detail:'Far distance · northeast bearing', loc:'upper canopy'},
+    {type:'Deer crossing logged', detail:'Lower trail · consistent with established route', loc:'ground level'},
+  ],
+  dawn:       [
+    {type:'First chorus registered', detail:'Songbird activity at threshold · increasing', loc:'canopy'},
+    {type:'Ground activity', detail:'Base of feeder station · species unconfirmed', loc:'ground level'},
+    {type:'Surface mist observed', detail:'Low elevation · likely lake-origin fog', loc:'field margin'},
+    {type:'Squirrel emergence', detail:'Eastern perimeter · cache-seeking behavior', loc:'ground level'},
+  ],
+  morning:    [
+    {type:'Chickadee rotation', detail:'Feeder station · loose flock sequence observed', loc:'feeder'},
+    {type:'Crow vocalization', detail:'Distant · northwest bearing · not repeated', loc:'mid-canopy'},
+    {type:'Woodpecker drumming', detail:'Sustained sequence · territorial or foraging context', loc:'mid-canopy'},
+    {type:'Jay intrusion', detail:'Brief visit · feeder displaced briefly', loc:'feeder'},
+  ],
+  midday:     [
+    {type:'Raptor silhouette', detail:'High thermal · slow circle · species unconfirmed', loc:'overhead'},
+    {type:'Feeder lull', detail:'Below typical traffic · normal midday pattern', loc:'feeder'},
+    {type:'Canopy movement', detail:'Wind-driven · not animal-attributed', loc:'upper canopy'},
+    {type:'No ground activity', detail:'Movement limited to canopy zones', loc:'understory'},
+  ],
+  afternoon:  [
+    {type:'Shadow shift noted', detail:'Western face · angle consistent with solar position', loc:'ground'},
+    {type:'Understory movement', detail:'Increasing frequency · pre-dusk pattern', loc:'understory'},
+    {type:'Nuthatch descent', detail:'Trunk foraging sequence · head-down typical behavior', loc:'mid-trunk'},
+    {type:'Wind direction change', detail:'Northwest shift · pressure-consistent', loc:'canopy'},
+  ],
+  dusk:       [
+    {type:'Evening approach sequence', detail:'Understory movement increasing · consistent with pre-dark pattern', loc:'understory'},
+    {type:'Jay departure logged', detail:'Last confirmed visit · feeder quiet following', loc:'feeder'},
+    {type:'Light threshold reached', detail:'Ambient below typical activity threshold', loc:'—'},
+    {type:'Surface calm established', detail:'Wind dropped · thermal inversion possible', loc:'ground level'},
+  ],
 };
+
 function currentPeriod() {
   const h = new Date().getHours();
   if (h<5) return 'night'; if (h<8) return 'dawn';
@@ -886,257 +1023,268 @@ function currentPeriod() {
   if (h<19) return 'afternoon'; if (h<22) return 'dusk';
   return 'night';
 }
-function fireEcho(text) {
+
+function fireEcho(overrideEvent) {
+  const pool = ECHO_POOL[currentPeriod()];
+  const ev = overrideEvent || pool[Math.floor(Math.random()*pool.length)];
   state.lastEchoAt = Date.now();
-  state.lastEchoText = text || randomFrom(ECHO_POOL[currentPeriod()]);
+  state.lastEchoEvent = ev;
+  renderEchoNow(ev, false);
 }
-function renderEcho() {
-  const ago = state.lastEchoAt ? Math.floor((Date.now()-state.lastEchoAt)/1000) : null;
-  const agoTxt = ago === null ? '—'
-    : ago < 60 ? `${ago}s ago`
-    : `${Math.floor(ago/60)}m ${String(ago%60).padStart(2,'0')}s ago`;
-  const el1 = document.getElementById('echo-1');
-  const el2 = document.getElementById('echo-2');
-  el1.textContent = state.lastEchoText ? `${state.lastEchoText} · ${agoTxt}` : 'Observation window open';
-  el1.className = 'line' + (state.lastRareAt && Date.now()-state.lastRareAt < 300000 ? ' rare-echo' : '');
-  el2.textContent = `Session: ${fmtDur((Date.now()-state.sessionStart)/1000)} continuous`;
+
+function renderEchoNow(ev, isRare) {
+  document.getElementById('ev-type').textContent = ev.type;
+  document.getElementById('ev-type').className = 'ev-type' + (isRare ? ' rare' : '');
+  document.getElementById('ev-detail').textContent = ev.detail;
+  document.getElementById('ev-ago').textContent = '';
 }
+
+function renderEchoTick() {
+  if (!state.lastEchoAt) return;
+  const ago = Math.floor((Date.now() - state.lastEchoAt) / 1000);
+  const agoStr = ago < 60
+    ? `Last detected · ${ago}s ago`
+    : `Last detected · ${Math.floor(ago/60)}m ${String(ago%60).padStart(2,'0')}s ago`;
+  document.getElementById('ev-ago').textContent = agoStr;
+}
+
 function scheduleEcho() {
-  const delay = (120 + Math.random()*300)*1000;
-  setTimeout(()=>{ fireEcho(); scheduleEcho(); }, delay);
+  // Jittered: 2-8 min, longer at night
+  const period = currentPeriod();
+  const base = period === 'night' ? 300 : 150;
+  const jitter = period === 'night' ? 200 : 250;
+  const delay = (base + Math.random()*jitter) * 1000;
+  setTimeout(() => { fireEcho(); scheduleEcho(); }, delay);
 }
-setInterval(renderEcho, 1000);
+setInterval(renderEchoTick, 1000);
 scheduleEcho();
 fireEcho();
 
 // ================================================================
-// 11. RARE EVENT SYSTEM (time-of-day weighted)
+// 11. RARE EVENTS — ambiguous language, less certainty
 // ================================================================
-/*
-  Event probability windows:
-  Dawn/Dusk: more plausible sightings (deer, fox, movement)
-  Midday: subtle anomalies (thermal, audio)
-  Night: eerie / unclassified
-  Bigfoot: anytime, very rare (1 per ~8hrs average weighted)
-*/
 const RARE_EVENTS = {
   dawn: [
-    { label:'MOVEMENT LOGGED', main:'Peripheral motion · low elevation · eastern edge', sub:'Duration: 3–4 seconds. Not wind-attributed.' },
-    { label:'CANOPY DISTURBANCE', main:'Origin unclear · upper canopy · no wind recorded at surface', sub:'Single event. Not repeated.' },
-    { label:'AUDIO ANOMALY', main:'Low vocalization · unmatched in regional index · 2.3 sec', sub:'Northwest bearing. Not repeated.' },
+    { cat:'Movement · unresolved', main:'Peripheral motion detected · low elevation · eastern edge', sub:'Duration estimated 3–5 seconds. Not attributed to known species. Not repeated.' },
+    { cat:'Canopy disturbance · origin unclear', main:'Upper canopy movement inconsistent with wind conditions at surface', sub:'Single occurrence. No follow-on activity logged.' },
+    { cat:'Audio event · unmatched', main:'Vocalization recorded · no match in regional index · 2.3 seconds', sub:'Northwest bearing. Classification unresolved.' },
   ],
   morning: [
-    { label:'TRACK PATTERN NOTED', main:'Ground disturbance · irregular spacing · southern approach', sub:'Consistent with large mammal. Unconfirmed.' },
-    { label:'RAPTOR APPROACH', main:'Large wingspan silhouette · low pass · eastern corridor', sub:'Duration: 6 seconds. Species unconfirmed.' },
-    { label:'FEEDER DISPLACEMENT', main:'Feeder position altered · no wind event recorded', sub:'Unattributed. Under observation.' },
+    { cat:'Ground disturbance · noted', main:'Irregular pattern at southern approach · spacing inconsistent with known species', sub:'Unconfirmed. Continuing observation.' },
+    { cat:'Aerial movement · unclassified', main:'Large wingspan silhouette · low pass · eastern corridor · 6 seconds', sub:'Species unconfirmed. Not reacquired.' },
+    { cat:'Feeder displacement', main:'Station position altered · no wind event recorded at time of occurrence', sub:'Cause unattributed. Under observation.' },
   ],
   midday: [
-    { label:'THERMAL SIGNATURE', main:'Irregular heat bloom · northwest quadrant · 4 seconds', sub:'No mechanical source identified.' },
-    { label:'REFLECTION ANOMALY', main:'Light reflection · stationary · 8 seconds · mid-canopy', sub:'Not cloud-attributed. Not repeated.' },
-    { label:'AUDIO ANOMALY', main:'Subsonic resonance detected · 340Hz band · 2.1 seconds', sub:'No match in regional wildlife index.' },
+    { cat:'Thermal anomaly · logged', main:'Heat signature inconsistent with ambient pattern · northwest quadrant', sub:'Duration: approximately 4 seconds. No mechanical source identified.' },
+    { cat:'Reflection anomaly · noted', main:'Light reflection observed · stationary · mid-canopy · 8 seconds', sub:'Not cloud-attributed. Not repeated. Classification pending.' },
+    { cat:'Subsonic event', main:'Low-frequency resonance · 340Hz range · 2.1 seconds', sub:'No match in available regional index. Source unresolved.' },
   ],
   afternoon: [
-    { label:'PERIMETER EVENT', main:'Large movement signature · western edge · sustained', sub:'4–6 seconds. Obscured by undergrowth.' },
-    { label:'UNCLASSIFIED MOVEMENT', main:'Bipedal gait pattern · treeline · western exposure', sub:'Mass estimate: large. No further activity.' },
-    { label:'GROUND VIBRATION', main:'Non-mechanical pattern registered · irregular sequence', sub:'Duration: 7 seconds. Not repeated.' },
+    { cat:'Perimeter movement · large', main:'Movement signature at western edge · sustained 4–6 seconds · obscured by undergrowth', sub:'Mass estimate: large. Species classification unresolved.' },
+    { cat:'Movement · classification unresolved', main:'Bipedal gait pattern observed at treeline · western exposure · dusk conditions', sub:'Mass estimate: large. Gait inconsistent with known regional species. No further activity.' },
+    { cat:'Ground event · unattributed', main:'Vibration pattern registered · irregular sequence · non-mechanical', sub:'Duration: 7 seconds. Not attributed. Not repeated.' },
   ],
   dusk: [
-    { label:'UNCLASSIFIED MOVEMENT', main:'Large bipedal silhouette · treeline · dusk conditions', sub:'Mass estimate: large. Gait: non-standard. No further activity recorded.' },
-    { label:'PERIMETER SENSOR', main:'Zone 3 event · single occurrence · northwest', sub:'Duration: 4 seconds. Not attributed.' },
-    { label:'CANOPY BREAK', main:'Upper branch stress · no wind event · single incident', sub:'Under continued observation.' },
+    { cat:'Movement · classification unresolved', main:'Large bipedal silhouette · treeline · low-light conditions · western exposure', sub:'Mass estimate: significantly above typical regional fauna. Gait pattern non-standard. No further activity recorded.' },
+    { cat:'Perimeter event · single occurrence', main:'Zone 3 disturbance · northwest bearing · 4 seconds', sub:'Not attributed to known source. Under continued observation.' },
+    { cat:'Canopy stress · unexplained', main:'Upper branch stress event · no wind recorded at surface · single incident', sub:'Cause unresolved. Observation continuing.' },
   ],
   night: [
-    { label:'THERMAL EVENT', main:'Unattributed heat signature · perimeter · 5 seconds', sub:'Low light conditions. Unresolved.' },
-    { label:'AUDIO ANOMALY', main:'Unclassified vocalization · 2.8 seconds · no echo', sub:'Not attributed to known regional species.' },
-    { label:'OBJECT OBSERVED', main:'Slow-moving · low altitude · no navigation lights', sub:'Duration: 11 seconds. Bearing: north. Unresolved.' },
-    { label:'MOVEMENT · LOW LIGHT', main:'Large mass estimate · ground level · brief', sub:'Poor visibility conditions. Not reacquired.' },
+    { cat:'Thermal event · unresolved', main:'Heat signature at perimeter · 5 seconds · low-light conditions', sub:'Unattributed. Classification not possible under current visibility.' },
+    { cat:'Vocalization · unmatched', main:'Sound event · 2.8 seconds · bearing unresolved · no echo', sub:'Not attributed to known regional species. Not repeated.' },
+    { cat:'Aerial object · unresolved', main:'Slow-moving object observed · low altitude · no navigation lights · bearing: north', sub:'Duration: 11 seconds. No match in known flight path data. Unresolved.' },
+    { cat:'Movement · low-light conditions', main:'Large mass estimate · ground level · brief duration', sub:'Poor visibility. Not reacquired. Classification not possible.' },
   ],
 };
 
-// Bigfoot: special, rarest, deadpan, fires any time
-const BIGFOOT_EVENT = {
-  label: 'UNCLASSIFIED MOVEMENT · LOGGED',
+const BIGFOOT = {
+  cat: 'Movement · classification unresolved',
   main: 'Bipedal gait pattern · large mass estimate · western treeline',
-  sub: 'Duration: 6 seconds. Not wind-attributed. No further activity recorded.',
-  isBigfoot: true,
+  sub: 'Duration: approximately 6 seconds. Not wind-attributed. Gait inconsistent with known regional fauna. No further activity recorded.',
 };
 
-// Weighted fire probability per hour by period
-// Returns avg minutes between rare events for current period
-function rareIntervalMinutes() {
+function rareIntervalMs() {
   const h = new Date().getHours();
-  // Dawn and dusk: more active, events every ~35-60 min
-  if (h>=5&&h<8||h>=17&&h<20)  return 35 + Math.random()*25;
-  // Morning/afternoon: every ~60-90 min
-  if (h>=8&&h<17) return 60 + Math.random()*30;
-  // Night: every ~90-150 min — eerie, slow burn
-  return 90 + Math.random()*60;
+  if ((h>=5&&h<8)||(h>=17&&h<20)) return (30 + Math.random()*30) * 60000;
+  if (h>=8&&h<17) return (60 + Math.random()*40) * 60000;
+  return (90 + Math.random()*70) * 60000;
 }
 
-// Bigfoot fires on a separate long timer: avg every 7-10 hrs
-function scheduleBigfoot() {
-  const delay = (420 + Math.random()*180)*60*1000;
-  setTimeout(()=>{ fireRareEvent(BIGFOOT_EVENT); scheduleBigfoot(); }, delay);
-}
-
-function fireRareEvent(event) {
+function fireRare(event) {
   const e = event || randomFrom(RARE_EVENTS[currentPeriod()]);
   const now = new Date();
   const ts = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
 
-  document.getElementById('rb-label').textContent = e.label;
+  document.getElementById('rb-cat').textContent = e.cat;
   document.getElementById('rb-main').textContent = e.main;
   document.getElementById('rb-sub').textContent = e.sub;
-  document.getElementById('rb-timestamp').textContent = `Logged: ${ts} local`;
+  document.getElementById('rb-ts').textContent = `Logged · ${ts} · classification pending`;
 
-  const banner = document.getElementById('rare-banner');
-  banner.classList.add('active');
-
+  document.getElementById('rare-banner').classList.add('active');
   state.lastRareAt = Date.now();
-  state.lastRareText = e.label;
-  state.rareEventLog.push({ ts, label: e.label });
+  state.rareLog.push({ts, cat: e.cat});
 
-  // Echo line immediately
-  fireEcho(`${e.label.toLowerCase()} · logged`);
+  // Inject into event log
+  renderEchoNow({ type: e.cat, detail: e.sub.split('.')[0] + '.', loc: '—' }, true);
+  state.lastEchoAt = Date.now();
+  state.lastEchoEvent = { type: e.cat, detail: e.sub };
 
-  // Banner stays 22 seconds, then fades
-  setTimeout(()=> banner.classList.remove('active'), 22000);
+  setTimeout(() => document.getElementById('rare-banner').classList.remove('active'), 24000);
 }
 
 function scheduleRare() {
-  const delay = rareIntervalMinutes() * 60 * 1000;
-  setTimeout(()=>{ fireRareEvent(); scheduleRare(); }, delay);
+  setTimeout(() => { fireRare(); scheduleRare(); }, rareIntervalMs());
 }
 scheduleRare();
+
+// Bigfoot: avg 7–10 hrs, any time
+function scheduleBigfoot() {
+  setTimeout(() => { fireRare(BIGFOOT); scheduleBigfoot(); }, (420+Math.random()*180)*60000);
+}
 scheduleBigfoot();
 
 // ================================================================
-// 12. SEASONAL PHENOLOGY (hardcoded Michigan DNR calendar)
+// 12. PHENOLOGY
 // ================================================================
 const PHENOLOGY = [
-  { start:[3,1],  end:[3,21],  note:'Ice-out window opens · Roscommon County historically mid-March' },
-  { start:[3,15], end:[4,5],   note:'First red-winged blackbirds return · wetland edges' },
-  { start:[4,1],  end:[4,25],  note:'Woodcock display flights begin · dawn and dusk' },
-  { start:[4,10], end:[4,25],  note:'Common Loon return window · Higgins Lake avg Apr 18' },
-  { start:[4,20], end:[5,10],  note:'Spring warbler migration peak · Roscommon County' },
-  { start:[5,1],  end:[5,20],  note:'Morel mushroom season · mixed hardwood and pine' },
-  { start:[5,10], end:[5,30],  note:'Trout lily bloom · forest floor' },
-  { start:[5,25], end:[6,15],  note:'Firefly first appearance window · avg June 9' },
-  { start:[6,15], end:[7,10],  note:'Fawn season · does with newborns, high alert' },
-  { start:[7,15], end:[8,15],  note:'Peak dragonfly activity · lake margins' },
-  { start:[8,1],  end:[9,1],   note:'Perseid window · peak Aug 12 · best 2–4am' },
-  { start:[8,20], end:[9,20],  note:'Early color change begins · swamp maples first' },
-  { start:[9,1],  end:[10,1],  note:'Hawk migration corridor active · broad-winged, sharp-shinned' },
-  { start:[9,15], end:[10,15], note:'Peak fall color · Roscommon County avg late Sept–early Oct' },
-  { start:[10,1], end:[11,1],  note:'Rut preparation begins · bucks active at first and last light' },
-  { start:[10,20], end:[11,20],note:'Rut peak · peak deer movement, dawn and dusk' },
-  { start:[11,1], end:[11,30], note:'Late waterfowl migration · divers moving south' },
-  { start:[11,15], end:[12,15],note:'First hard freeze window · typical late November' },
-  { start:[12,10], end:[1,10], note:'Ice formation begins · bays freeze before basins' },
-  { start:[1,15], end:[2,28],  note:'Deep winter · chickadee and nuthatch primary feeder visitors' },
-  { start:[2,20], end:[3,20],  note:'Lengthening days measurable · dawn chorus reactivating' },
+  {s:[3,1],e:[3,21],n:'Ice-out window open · Roscommon County historically mid-March'},
+  {s:[3,15],e:[4,5],n:'First red-winged blackbirds return · wetland edges'},
+  {s:[4,1],e:[4,25],n:'Woodcock display flights begin · dawn and dusk'},
+  {s:[4,10],e:[4,25],n:'Common Loon return window · Higgins Lake avg Apr 18'},
+  {s:[4,20],e:[5,10],n:'Spring warbler migration peak · Roscommon County'},
+  {s:[5,1],e:[5,20],n:'Morel season · mixed hardwood and pine stands'},
+  {s:[5,10],e:[5,30],n:'Trout lily bloom · forest floor'},
+  {s:[5,25],e:[6,15],n:'Firefly first appearance window · avg June 9'},
+  {s:[6,15],e:[7,10],n:'Fawn season · does with newborns · high alert'},
+  {s:[7,15],e:[8,15],n:'Peak dragonfly activity · lake margins'},
+  {s:[8,1],e:[9,1],n:'Perseid window · peak Aug 12 · best 2–4am'},
+  {s:[8,20],e:[9,20],n:'Early color change · swamp maples first'},
+  {s:[9,1],e:[10,1],n:'Hawk migration corridor active · broad-winged, sharp-shinned'},
+  {s:[9,15],e:[10,15],n:'Peak fall color · Roscommon County avg late Sept–early Oct'},
+  {s:[10,1],e:[11,1],n:'Rut preparation · bucks active at first and last light'},
+  {s:[10,20],e:[11,20],n:'Rut peak · maximum deer movement · dawn and dusk'},
+  {s:[11,1],e:[11,30],n:'Late waterfowl migration · divers moving south'},
+  {s:[11,15],e:[12,15],n:'First hard freeze window · typical late November'},
+  {s:[12,10],e:[1,10],n:'Ice formation begins · bays freeze before basins'},
+  {s:[1,15],e:[2,28],n:'Deep winter · chickadee and nuthatch primary feeder visitors'},
+  {s:[2,20],e:[3,20],n:'Lengthening days measurable · dawn chorus reactivating'},
 ];
-
-function currentPhenology() {
-  const now = new Date();
-  const m = now.getMonth()+1, d = now.getDate();
-  const toNum = (mo,da) => mo*100+da;
-  const cur = toNum(m,d);
+function activePhenology() {
+  const now = new Date(), m=now.getMonth()+1, d=now.getDate();
+  const n = (mo,da) => mo*100+da, cur = n(m,d);
   return PHENOLOGY.filter(p => {
-    const s = toNum(p.start[0],p.start[1]);
-    const e = toNum(p.end[0],p.end[1]);
-    if (s <= e) return cur >= s && cur <= e;
-    return cur >= s || cur <= e; // wraps year
+    const s=n(p.s[0],p.s[1]), e=n(p.e[0],p.e[1]);
+    return s<=e ? cur>=s&&cur<=e : cur>=s||cur<=e;
   });
 }
-
 function updatePhenology() {
-  const active = currentPhenology();
-  const el = document.getElementById('phenology-line');
-  if (!active.length) { el.textContent = ''; return; }
-  // Rotate through active phenology notes
-  const idx = Math.floor(Date.now() / (7*60*1000)) % active.length;
-  el.textContent = active[idx].note;
+  const active = activePhenology();
+  const el = document.getElementById('pheno-line');
+  if (!active.length) { el.textContent=''; return; }
+  el.textContent = active[Math.floor(Date.now()/(7*60*1000)) % active.length].n;
 }
 updatePhenology();
 setInterval(updatePhenology, 7*60*1000);
 
 // ================================================================
-// 13. CYCLING OBSERVATIONS (Tier 2 — forest-centric)
+// 13. CYCLING OBSERVATIONS — content type rotation, no repeats
 // ================================================================
 const CYCLING_POOL = {
-  all: [
-    'White pine: dominant canopy species in this region, often 80–100 ft.',
-    'Hemlock shade suppresses undergrowth; floor stays clear.',
-    'Sugar maple: primary fall color source in mixed hardwood stands.',
-    'Red squirrel caches are distributed, not centralized.',
-    'Pileated woodpecker excavations are rectangular, not round.',
-    'Dead snags retained in forest provide primary nesting structure.',
-    'Beech bark disease has reduced mast production across the region.',
-    'Roscommon County: 70% forested. Mixed conifer and hardwood.',
-    'Most noticeable changes tend to happen during low-traffic hours.',
-    'Experienced observers recognize feeder sequences by species order.',
-    'Forest edge zones carry higher density and diversity than deep canopy.',
-    'Wind direction shifts are often preceded by brief calm.',
+  // Type-tagged for rotation logic
+  observation: [
+    'Most noticeable changes occur during low-traffic periods.',
+    'Experienced observers tend to recognize movement earlier than expected.',
+    'Activity often increases following extended quiet intervals.',
+    'Forest edge zones carry higher density than deep canopy.',
+    'Wind direction shifts are commonly preceded by brief surface calm.',
+  ],
+  ecology: [
+    'White pine: dominant canopy species in this region. Often 80–100 ft at maturity.',
+    'Hemlock shade suppresses undergrowth — floor stays clear beneath dense stands.',
+    'Dead snags retained in forest provide primary cavity nesting structure.',
+    'Beech bark disease has reduced mast production across the region since the 1990s.',
+    'Roscommon County: approximately 70% forested. Mixed conifer and northern hardwood.',
+    'Pileated woodpecker excavations are rectangular. All others are round or oval.',
+    'Red squirrel caches are distributed, not centralized — scatter-hoard strategy.',
+  ],
+  pattern: [
+    'Feeder rotations often arrive in consistent species-specific sequences.',
+    'A falling barometer typically quiets songbirds before any visible weather change.',
+    'Deer tend to move along the same routes across generations.',
+    'Raptor activity increases as thermal lift develops mid-morning.',
+    'First frost commonly arrives on a night of clear skies and no wind.',
+    'Barometric pressure changes are often registered by wildlife before instruments.',
   ],
   dawn: [
-    'Songbird activity typically begins 20–30 min before civil twilight.',
+    'Songbird activity typically begins 20–30 minutes before civil twilight.',
     'First light arrives at canopy crown before reaching the forest floor.',
     'Dawn chorus peaks within 30 minutes of sunrise, then subsides.',
     'Deer are commonly present at first light, absent by full sun.',
   ],
   morning: [
-    'Woodpecker foraging activity peaks mid-morning.',
-    'Feeder rotations often arrive in consistent species-specific sequences.',
-    'Squirrel activity increases as temperature climbs.',
-    'Red-tailed hawks begin thermal soaring as ground warms.',
+    'Woodpecker foraging activity peaks mid-morning across most of the year.',
+    'Squirrel activity increases as air temperature climbs.',
+    'Red-tailed hawks begin thermal soaring as ground surface warms.',
   ],
   midday: [
-    'Thermal lift builds as the sun clears the canopy.',
-    'Raptor soaring correlates with midday thermal development.',
-    'Feeder traffic generally decreases during peak sun hours.',
-    'Forest floor activity moves to shade; movement slows.',
+    'Thermal lift builds as the sun clears the canopy edge.',
+    'Feeder traffic typically below average during peak sun hours.',
+    'Forest floor activity migrates toward shade zones as temperature peaks.',
   ],
   afternoon: [
-    'Shadow angle measurably extends after solar noon.',
-    'Understory activity increases as canopy shade lengthens.',
-    'Barometric pressure changes are often sensed by wildlife before instruments.',
-    'A falling barometer quiets songbirds before it reaches the leaves.',
+    'Shadow angle extends measurably with each hour past solar noon.',
+    'Understory activity increases as canopy shade coverage lengthens.',
+    'Crows are one of few species to actively observe and remember patterns.',
   ],
   dusk: [
-    'Wildlife movement increases at first and last light.',
-    'Evening chorus overlaps briefly with early owl vocalizations.',
+    'Wildlife movement increases at first and last light — consistent across seasons.',
+    'Evening chorus briefly overlaps with early owl vocalizations.',
     'Deer most active in the 40 minutes before and after sunset.',
-    'Surface wind commonly drops toward calm as temperature equalizes.',
   ],
   night: [
-    'Nocturnal movement follows established trail patterns.',
-    'Owl calls travel further in stable, cool air.',
+    'Nocturnal movement follows established trail patterns — rarely deviates.',
+    'Owl calls travel further in stable, cool, windless air.',
     'Great Horned Owl: primary large predator in this forest system.',
-    'Coyote activity peaks between midnight and 3am.',
+    'Coyote vocalization peaks between midnight and 3am.',
   ],
 };
 
+// Type rotation — never show same type back-to-back
+const TYPE_ORDER = ['observation','ecology','pattern'];
+let typeIdx = 0;
+
 function pickCycling() {
-  const p = currentPeriod();
-  const pool = [...CYCLING_POOL.all, ...(CYCLING_POOL[p]||[])];
+  const period = currentPeriod();
+  const typePool = TYPE_ORDER;
+  const type = typePool[typeIdx % typePool.length];
+  typeIdx++;
+
+  // Merge period-specific if applicable
+  const periodLines = CYCLING_POOL[period] || [];
+  const baseLines = CYCLING_POOL[type] || [];
+  // Alternate: sometimes pull from period, sometimes from type
+  const usePeriod = Math.random() > 0.5 && periodLines.length > 0;
+  const pool = usePeriod ? periodLines : baseLines;
+
   let idx;
   do { idx = Math.floor(Math.random()*pool.length); }
   while (pool.length > 1 && idx === state.lastCyclingIdx);
   state.lastCyclingIdx = idx;
+
   const el = document.getElementById('cycling-line');
   el.classList.add('fade');
-  setTimeout(()=>{ el.textContent = pool[idx]; el.classList.remove('fade'); }, 650);
+  setTimeout(() => { el.textContent = pool[idx]; el.classList.remove('fade'); }, 800);
 }
 pickCycling();
 function scheduleCycling() {
-  const delay = (90 + Math.random()*150)*1000;
-  setTimeout(()=>{ pickCycling(); scheduleCycling(); }, delay);
+  // Jittered 2-5 min — slower than before
+  const delay = (120 + Math.random()*180) * 1000;
+  setTimeout(() => { pickCycling(); scheduleCycling(); }, delay);
 }
 scheduleCycling();
 
 // ================================================================
-// 14. ELDER VOICE (Claude API, seed fallback)
+// 14. ELDER VOICE
 // ================================================================
 const ELDER_SEED = [
   'The forest quiets before a hawk moves through it.',
@@ -1157,21 +1305,21 @@ const ELDER_SEED = [
   'Crows remember faces. They also remember absences.',
   'In deep cold, sound carries before light does.',
   'The squirrel that stops and listens has already heard something.',
-  'Old growth reads its history in its own scars.',
   'The canopy edge is where most things happen.',
   'November light is not dim. It is precise.',
   'A fox moves through snow without touching it.',
   'Every cleared trail through this forest was an animal\'s idea first.',
   'The understory in rain becomes a different place than the understory in sun.',
+  'Wind reveals the structure of things the eye misses in stillness.',
+  'Old growth reads its history in its own scars.',
+  'Something that has always been here does not need to announce itself.',
 ];
 state.elderPool = [...ELDER_SEED];
 
 function seasonName() {
   const m = new Date().getMonth();
-  if (m<2||m===11) return 'winter';
-  if (m<5) return 'spring';
-  if (m<8) return 'summer';
-  return 'autumn';
+  if (m<2||m===11) return 'winter'; if (m<5) return 'spring';
+  if (m<8) return 'summer'; return 'autumn';
 }
 
 async function hydrateElder() {
@@ -1185,29 +1333,25 @@ async function hydrateElder() {
       weather: {
         temp_f: state.weather.temperature_2m,
         wind_mph: state.weather.wind_speed_10m,
-        wind_dir: (() => {
-          const dirs=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
-          return dirs[Math.round(state.weather.wind_direction_10m/22.5)%16];
-        })(),
+        wind_dir: compassDir(state.weather.wind_direction_10m),
         sky_code: state.weather.weather_code,
         cloud_pct: state.weather.cloud_cover,
         pressure_hpa: state.weather.pressure_msl,
-        pressure_trend: pressureTrendLabel(),
+        pressure_trend: pressureTrendInterp(),
       },
-      phenology: currentPhenology().map(p=>p.note).slice(0,2),
-      rare_events_today: state.rareEventLog.length,
+      phenology: activePhenology().map(p=>p.n).slice(0,2),
+      rare_events_session: state.rareLog.length,
     };
     const r = await fetch(ELDER_ENDPOINT, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(ctx),
     });
     if (!r.ok) throw new Error('elder '+r.status);
     const data = await r.json();
-    if (Array.isArray(data.lines) && data.lines.length) {
+    if (Array.isArray(data.lines)&&data.lines.length) {
       state.elderPool = [...data.lines, ...ELDER_SEED];
     }
-  } catch(e) { console.warn('Elder hydration (using seed):', e); }
+  } catch(e) { console.warn('Elder (using seed):', e); }
 }
 
 function pickElder() {
@@ -1218,15 +1362,17 @@ function pickElder() {
   state.lastElderIdx = idx;
   const el = document.getElementById('elder-line');
   el.classList.add('fade');
-  setTimeout(()=>{ el.textContent = pool[idx]; el.classList.remove('fade'); }, 900);
+  // Slower reveal — 1.2s fade-in
+  setTimeout(() => { el.textContent = pool[idx]; el.classList.remove('fade'); }, 1200);
 }
 pickElder();
 function scheduleElder() {
-  const delay = (180 + Math.random()*180)*1000;
-  setTimeout(()=>{ pickElder(); scheduleElder(); }, delay);
+  // 4-8 min — slower, more weighted
+  const delay = (240 + Math.random()*240) * 1000;
+  setTimeout(() => { pickElder(); scheduleElder(); }, delay);
 }
 scheduleElder();
-setTimeout(()=>{ hydrateElder(); setInterval(hydrateElder, 12*60*1000); }, 6000);
+setTimeout(() => { hydrateElder(); setInterval(hydrateElder, 14*60*1000); }, 8000);
 
 // ================================================================
 // UTILS
