@@ -64,10 +64,10 @@ body.night-mode {
 }
 .top-left .name {
   font-family: 'Playfair Display', Georgia, serif;
-  font-size: 19px;
+  font-size: 24px;
   font-style: italic;
   font-weight: 400;
-  color: var(--w80);
+  color: rgba(255,255,255,0.95);
   letter-spacing: 0.01em;
   text-shadow: var(--ts);
   line-height: 1;
@@ -104,18 +104,18 @@ body.night-mode {
 }
 /* Clock — smaller, not dominant */
 .top-right .clock {
-  font-size: 30px;
+  font-size: 36px;
   font-weight: 300;
-  color: var(--w80);
+  color: var(--w95);
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
   text-shadow: var(--ts2);
   line-height: 1;
 }
 .top-right .weather-line {
-  font-size: 15px;
-  font-weight: 400;
-  color: var(--w60);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--w80);
   letter-spacing: 0.04em;
   text-shadow: var(--ts2);
   margin-top: 5px;
@@ -142,14 +142,14 @@ body.night-mode {
 .right-data.loaded { opacity: 1; }
 .right-data .dr { margin-bottom: 12px; }
 .right-data .dr-lbl {
-  font-size: 9px; font-weight: 600;
-  letter-spacing: 0.22em; text-transform: uppercase;
-  color: var(--w40); text-shadow: var(--ts3);
+  font-size: 11px; font-weight: 600;
+  letter-spacing: 0.18em; text-transform: uppercase;
+  color: rgba(255,255,255,0.65); text-shadow: var(--ts3);
   margin-bottom: 2px;
 }
 .right-data .dr-val {
-  font-size: 13px; font-weight: 400;
-  color: var(--w60); letter-spacing: 0.04em;
+  font-size: 15px; font-weight: 500;
+  color: rgba(255,255,255,0.88); letter-spacing: 0.04em;
   text-shadow: var(--ts3);
 }
 
@@ -200,9 +200,9 @@ body.night-mode {
 }
 .seasonal-arc.visible { opacity: 1; }
 .seasonal-arc .sa-text {
-  font-size: 11px; font-weight: 500;
+  font-size: 13px; font-weight: 600;
   letter-spacing: 0.14em; text-transform: uppercase;
-  color: var(--w40); text-shadow: var(--ts3);
+  color: rgba(218,172,72,0.90); text-shadow: var(--ts3);
 }
 
 /* ── WINDOW OF INTEREST (center, pre-dawn/dusk) ── */
@@ -316,16 +316,32 @@ body.night-mode {
   color: var(--w60); text-shadow: var(--ts2);
 }
 
+/* ── BOTTOM BACKING PANEL ─────────────────────── */
+.bottom-panel {
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 220px;
+  background: linear-gradient(0deg, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.0) 100%);
+  pointer-events: none;
+}
+
+/* ── TOP BACKING PANEL ────────────────────────── */
+.top-panel {
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 120px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.0) 100%);
+  pointer-events: none;
+}
+
 /* ── BOTTOM LEFT — STATE MODULE ───────────────── */
 .bottom-left {
   position: absolute;
-  bottom: 72px; left: 34px;
+  bottom: 140px; left: 34px;
   width: 540px;
 }
 /* State — primary voice, dominant */
 .bottom-left .ev-type {
-  font-size: 26px; font-weight: 600;
-  color: var(--w95); letter-spacing: 0.01em;
+  font-size: 30px; font-weight: 700;
+  color: rgba(255,255,255,0.98); letter-spacing: 0.01em;
   text-shadow: var(--ts); line-height: 1.1;
 }
 .bottom-left .ev-type.state-build      { color: rgba(218,172,72,0.98); }
@@ -338,14 +354,14 @@ body.night-mode {
 .bottom-left .ev-type.rare             { color: var(--rare); }
 
 .bottom-left .ev-context {
-  font-size: 14px; font-weight: 400;
-  color: var(--w60); letter-spacing: 0.02em;
-  text-shadow: var(--ts2); margin-top: 6px;
+  font-size: 16px; font-weight: 500;
+  color: rgba(255,255,255,0.90); letter-spacing: 0.02em;
+  text-shadow: var(--ts); margin-top: 6px;
   line-height: 1.45;
 }
 .bottom-left .ev-ago {
-  font-size: 12px; font-weight: 500;
-  color: var(--w40); letter-spacing: 0.08em;
+  font-size: 13px; font-weight: 500;
+  color: rgba(255,255,255,0.70); letter-spacing: 0.08em;
   text-shadow: var(--ts3); margin-top: 8px;
   font-variant-numeric: tabular-nums;
 }
@@ -353,15 +369,15 @@ body.night-mode {
 /* ── BOTTOM CENTER — QUOTE / JOURNAL ─────────── */
 .bottom-center {
   position: absolute;
-  bottom: 68px; left: 50%;
+  bottom: 136px; left: 50%;
   transform: translateX(-50%);
   width: 740px; text-align: center;
 }
 .bottom-center .quote {
   font-family: 'Playfair Display', Georgia, serif;
-  font-style: italic; font-size: 22px; font-weight: 400;
+  font-style: italic; font-size: 28px; font-weight: 400;
   color: var(--w95); line-height: 1.4; letter-spacing: 0.01em;
-  text-shadow: 0 1px 8px rgba(0,0,0,0.95), 0 0 24px rgba(0,0,0,0.7);
+  text-shadow: 0 2px 12px rgba(0,0,0,1), 0 0 30px rgba(0,0,0,0.95), 0 1px 3px rgba(0,0,0,1);
   transition: opacity 1.4s ease;
 }
 .bottom-center .quote.fade { opacity: 0; }
@@ -407,6 +423,10 @@ body.debug-mode .seasonal-arc { opacity: 1 !important; }
   <span class="nb-lbl">NWS Advisory</span>
   <span class="nb-txt" id="noaa-text">—</span>
 </div>
+
+<!-- Gradient backing panels — ensure readability over any footage -->
+<div class="top-panel"></div>
+<div class="bottom-panel"></div>
 
 <!-- TOP LEFT: identity + session record -->
 <div class="top-left">
@@ -567,6 +587,15 @@ function showCenter(el, duration, onDone) {
   }, duration);
   return true;
 }
+
+// ── SESSION MILESTONES — declared early to avoid init error ──
+const MILESTONES = [
+  { min: 10,  text: '10 minutes of continuous observation' },
+  { min: 30,  text: '30 minutes · most viewers have already left' },
+  { min: 60,  text: 'One hour · the patterns start to become visible' },
+  { min: 120, text: 'Two hours · you are learning this forest' },
+  { min: 180, text: 'Three hours · experienced viewer' },
+];
 
 // ── CLOCK + DATE + NIGHT MODE ──────────────────
 function updateClock() {
@@ -953,14 +982,6 @@ function scheduleJournal() {
 setTimeout(() => { fireJournalEntry(); scheduleJournal(); }, 8*60*1000);
 
 // ── SESSION MILESTONES ─────────────────────────
-const MILESTONES = [
-  { min: 10,  text: '10 minutes of continuous observation' },
-  { min: 30,  text: '30 minutes · most viewers have already left' },
-  { min: 60,  text: 'One hour · the patterns start to become visible' },
-  { min: 120, text: 'Two hours · you are learning this forest' },
-  { min: 180, text: 'Three hours · experienced viewer' },
-];
-
 function checkMilestones(now) {
   const elapsed = Math.floor((now - S.sessionStart) / 60000);
   for (const m of MILESTONES) {
