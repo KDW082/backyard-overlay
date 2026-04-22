@@ -339,8 +339,8 @@ body.night-mode {
 
 .bottom-left .ev-context {
   font-size: 14px; font-weight: 400;
-  color: rgba(255,255,255,0.90); letter-spacing: 0.02em;
-  text-shadow: var(--ts); margin-top: 6px;
+  color: var(--w60); letter-spacing: 0.02em;
+  text-shadow: var(--ts2); margin-top: 6px;
   line-height: 1.45;
 }
 .bottom-left .ev-ago {
@@ -371,8 +371,8 @@ body.night-mode {
   position: absolute;
   bottom: 0; left: 0; right: 0; height: 40px;
   overflow: hidden;
-  background: rgba(0,0,0,0.65);
-  border-top: 1px solid rgba(255,255,255,0.25);
+  background: rgba(0,0,0,0.45);
+  border-top: 1px solid rgba(255,255,255,0.12);
   display: flex; align-items: center;
 }
 .ticker-track {
@@ -589,6 +589,7 @@ function updateClock() {
     document.body.classList.toggle('night-mode', night);
   }
 
+  checkMilestones(now);
   updateWindowOfInterest(now);
 }
 setInterval(updateClock, 1000);
@@ -952,7 +953,7 @@ function scheduleJournal() {
 setTimeout(() => { fireJournalEntry(); scheduleJournal(); }, 8*60*1000);
 
 // ── SESSION MILESTONES ─────────────────────────
-var MILESTONES = [
+const MILESTONES = [
   { min: 10,  text: '10 minutes of continuous observation' },
   { min: 30,  text: '30 minutes · most viewers have already left' },
   { min: 60,  text: 'One hour · the patterns start to become visible' },
@@ -1394,7 +1395,7 @@ function buildTicker(weather) {
 buildTicker(null);
 
 // ── PHENOLOGY ──────────────────────────────────
-var PHENOLOGY = [
+const PHENOLOGY = [
   {s:[3,1],e:[3,21],n:'Ice-out window open · Roscommon County'},
   {s:[4,1],e:[4,25],n:'Woodcock display flights · dawn and dusk'},
   {s:[4,10],e:[4,25],n:'Loon return window · Higgins Lake avg Apr 18'},
