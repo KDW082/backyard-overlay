@@ -953,7 +953,7 @@ function scheduleJournal() {
 setTimeout(() => { fireJournalEntry(); scheduleJournal(); }, 8*60*1000);
 
 // ── SESSION MILESTONES ─────────────────────────
-const MILESTONES = [
+var MILESTONES = [
   { min: 10,  text: '10 minutes of continuous observation' },
   { min: 30,  text: '30 minutes · most viewers have already left' },
   { min: 60,  text: 'One hour · the patterns start to become visible' },
