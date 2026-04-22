@@ -11,7 +11,12 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
-html, body {
+html {
+  width: 100%;
+  height: 100%;
+}
+
+body {
   width: 1920px;
   height: 1080px;
   background: transparent;
@@ -19,7 +24,14 @@ html, body {
   font-family: 'Inter', -apple-system, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   color: #fff;
+  transform-origin: top left;
 }
+
+/* Debug mode: add ?debug to URL */
+body.debug-mode {
+  background: #141a14 !important;
+}
+body.debug-mode .right-data { opacity: 1 !important; }
 
 :root {
   --w95: rgba(255,255,255,0.95);
@@ -474,6 +486,23 @@ const LAT = 44.48, LON = -84.72;
 const ELDER_ENDPOINT = '/.netlify/functions/elder-voice';
 const EBIRD_KEY = '';
 const NOAA_ZONE = 'MIZ037';
+
+// Scale overlay to fit any window size (OBS or browser)
+function scaleOverlay() {
+  const scaleX = window.innerWidth  / 1920;
+  const scaleY = window.innerHeight / 1080;
+  const scale  = Math.min(scaleX, scaleY);
+  document.body.style.transform = `scale(${scale})`;
+  document.body.style.marginLeft = `${(window.innerWidth  - 1920 * scale) / 2}px`;
+  document.body.style.marginTop  = `${(window.innerHeight - 1080 * scale) / 2}px`;
+}
+scaleOverlay();
+window.addEventListener('resize', scaleOverlay);
+
+// Debug mode — add ?debug to URL for dark background in browser
+if (window.location.search.includes('debug')) {
+  document.body.classList.add('debug-mode');
+}
 
 // ── SESSION STATE ──────────────────────────────
 const S = {
