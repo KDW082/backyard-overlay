@@ -568,6 +568,15 @@ function showCenter(el, duration, onDone) {
   return true;
 }
 
+// ── SESSION MILESTONES — declared early to avoid init error ──
+// MILESTONES defined above
+  { min: 10,  text: '10 minutes of continuous observation' },
+  { min: 30,  text: '30 minutes · most viewers have already left' },
+  { min: 60,  text: 'One hour · the patterns start to become visible' },
+  { min: 120, text: 'Two hours · you are learning this forest' },
+  { min: 180, text: 'Three hours · experienced viewer' },
+];
+
 // ── CLOCK + DATE + NIGHT MODE ──────────────────
 function updateClock() {
   const now = new Date();
@@ -953,14 +962,6 @@ function scheduleJournal() {
 setTimeout(() => { fireJournalEntry(); scheduleJournal(); }, 8*60*1000);
 
 // ── SESSION MILESTONES ─────────────────────────
-const MILESTONES = [
-  { min: 10,  text: '10 minutes of continuous observation' },
-  { min: 30,  text: '30 minutes · most viewers have already left' },
-  { min: 60,  text: 'One hour · the patterns start to become visible' },
-  { min: 120, text: 'Two hours · you are learning this forest' },
-  { min: 180, text: 'Three hours · experienced viewer' },
-];
-
 function checkMilestones(now) {
   const elapsed = Math.floor((now - S.sessionStart) / 60000);
   for (const m of MILESTONES) {
