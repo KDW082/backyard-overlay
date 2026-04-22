@@ -11,12 +11,7 @@
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
-html {
-  width: 100%;
-  height: 100%;
-}
-
-body {
+html, body {
   width: 1920px;
   height: 1080px;
   background: transparent;
@@ -24,14 +19,7 @@ body {
   font-family: 'Inter', -apple-system, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   color: #fff;
-  transform-origin: top left;
 }
-
-/* Debug mode: add ?debug to URL */
-body.debug-mode {
-  background: #141a14 !important;
-}
-body.debug-mode .right-data { opacity: 1 !important; }
 
 :root {
   --w95: rgba(255,255,255,0.95);
@@ -334,7 +322,7 @@ body.night-mode {
 .bottom-left .ev-type.state-quiet      { color: rgba(255,255,255,0.72); }
 .bottom-left .ev-type.state-transition { color: rgba(218,172,72,0.88); }
 .bottom-left .ev-type.state-drama      { color: rgba(218,172,72,1); }
-.bottom-left .ev-type.state-night      { color: rgba(200,215,235,0.90); }
+.bottom-left .ev-type.state-night      { color: rgba(200,210,220,0.72); }
 .bottom-left .ev-type.rare             { color: var(--rare); }
 
 .bottom-left .ev-context {
@@ -371,8 +359,8 @@ body.night-mode {
   position: absolute;
   bottom: 0; left: 0; right: 0; height: 40px;
   overflow: hidden;
-  background: rgba(0,0,0,0.45);
-  border-top: 1px solid rgba(255,255,255,0.12);
+  background: rgba(0,0,0,0.28);
+  border-top: 1px solid rgba(255,255,255,0.07);
   display: flex; align-items: center;
 }
 .ticker-track {
@@ -383,22 +371,16 @@ body.night-mode {
 @keyframes tick { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 .ticker-item {
   font-size: 12px; font-weight: 400;
-  color: var(--w80); letter-spacing: 0.06em;
+  color: var(--w60); letter-spacing: 0.06em;
   padding: 0 52px; text-shadow: var(--ts3);
 }
 .ticker-dot { color: var(--w20); }
 
 /* ── NIGHT MODE OVERLAY ───────────────────────── */
-body.night-mode .top-left .name { color: rgba(200,210,225,0.80); }
-body.night-mode .top-right .clock { color: rgba(200,210,225,0.85); }
+body.night-mode .top-left .name { color: rgba(200,210,225,0.70); }
+body.night-mode .top-right .clock { color: rgba(200,210,225,0.75); }
+body.night-mode .bottom-left .ev-type { opacity: 0.85; }
 body.night-mode .ticker-wrap { background: rgba(0,0,0,0.40); }
-
-/* ── DEBUG MODE — force all content visible ───── */
-body.debug-mode .right-data,
-body.debug-mode .bottom-left .ev-type,
-body.debug-mode .bottom-left .ev-context,
-body.debug-mode .bottom-center .quote,
-body.debug-mode .seasonal-arc { opacity: 1 !important; }
 </style>
 </head>
 <body>
@@ -411,6 +393,10 @@ body.debug-mode .seasonal-arc { opacity: 1 !important; }
 <!-- TOP LEFT: identity + session record -->
 <div class="top-left">
   <div class="name">Northern Michigan's Backyard</div>
+  <div class="loc">Winter-Chard · Roscommon Co. · Michigan</div>
+  <div class="session-record" id="session-record">
+    Session: <span class="count" id="event-count">0</span> events logged
+  </div>
 </div>
 
 <!-- TOP RIGHT: clock (smaller) + conditions -->
@@ -493,27 +479,9 @@ const ELDER_ENDPOINT = '/.netlify/functions/elder-voice';
 const EBIRD_KEY = '';
 const NOAA_ZONE = 'MIZ037';
 
-// Scale overlay to fit any window size (OBS or browser)
-function scaleOverlay() {
-  const scaleX = window.innerWidth  / 1920;
-  const scaleY = window.innerHeight / 1080;
-  const scale  = Math.min(scaleX, scaleY);
-  document.body.style.transform = `scale(${scale})`;
-  document.body.style.marginLeft = `${(window.innerWidth  - 1920 * scale) / 2}px`;
-  document.body.style.marginTop  = `${(window.innerHeight - 1080 * scale) / 2}px`;
-}
-scaleOverlay();
-window.addEventListener('resize', scaleOverlay);
-
-// Debug mode — add ?debug to URL for dark background in browser
-if (window.location.search.includes('debug')) {
-  document.body.classList.add('debug-mode');
-}
-
 // ── SESSION STATE ──────────────────────────────
 const S = {
   weather: null,
-  forecast: [],
   elderPool: [],
   lastElderIdx: -1,
   sessionStart: Date.now(),
@@ -627,16 +595,10 @@ async function updateWeather() {
       `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}`
       +`&current=temperature_2m,wind_speed_10m,wind_direction_10m,wind_gusts_10m,`
       +`pressure_msl,cloud_cover,weather_code`
-      +`&hourly=temperature_2m,weather_code,precipitation_probability,wind_speed_10m`
       +`&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FDetroit`
-      +`&forecast_days=1`
     );
     const d = await r.json(); const c = d.current;
     S.weather = c;
-
-    // Parse next 4 hours of forecast
-    S.forecast = parseForecast(d.hourly);
-
     S.pressureTrend.push({t:Date.now(), p:c.pressure_msl});
     if (S.pressureTrend.length > 8) S.pressureTrend.shift();
 
@@ -651,60 +613,6 @@ async function updateWeather() {
     renderState();
     buildTicker(c);
   } catch(e) { console.warn('weather:', e); }
-}
-
-// Parse hourly forecast into next 4 hours
-function parseForecast(hourly) {
-  if (!hourly || !hourly.time) return [];
-  const now = new Date();
-  const currentHour = now.getHours();
-  const results = [];
-  for (let i = 0; i < hourly.time.length && results.length < 4; i++) {
-    const t = new Date(hourly.time[i]);
-    if (t > now) {
-      const hoursOut = Math.round((t - now) / 3600000);
-      results.push({
-        hoursOut,
-        temp: hourly.temperature_2m[i],
-        code: hourly.weather_code[i],
-        precipProb: hourly.precipitation_probability[i],
-        wind: hourly.wind_speed_10m[i],
-        time: t,
-      });
-    }
-  }
-  return results;
-}
-
-// Get the most significant forecast event in next 4 hrs
-function forecastInsight() {
-  const fc = S.forecast || [];
-  if (!fc.length) return null;
-
-  // Rain/storm incoming
-  const rain = fc.find(h => h.precipProb > 50);
-  if (rain) {
-    const hrs = rain.hoursOut;
-    const label = rain.code >= 95 ? 'Storm' : rain.code >= 61 ? 'Rain' : 'Drizzle';
-    return `${label} likely in ${hrs === 1 ? 'about an hour' : `approximately ${hrs} hours`}`;
-  }
-
-  // Significant temp drop
-  if (fc.length >= 2) {
-    const tempDrop = S.weather.temperature_2m - fc[fc.length-1].temp;
-    if (tempDrop > 8) return `Temperature dropping ${tempDrop.toFixed(0)}° over the next few hours`;
-    if (tempDrop < -8) return `Temperature rising ${Math.abs(tempDrop).toFixed(0)}° through the afternoon`;
-  }
-
-  // Wind increase
-  const windIncrease = fc.find(h => h.wind > (S.weather?.wind_speed_10m || 0) + 10);
-  if (windIncrease) return `Wind increasing to ${windIncrease.wind.toFixed(0)} mph within ${windIncrease.hoursOut} hour${windIncrease.hoursOut > 1 ? 's' : ''}`;
-
-  // Snow incoming
-  const snow = fc.find(h => [71,73,75,77,85,86].includes(h.code));
-  if (snow) return `Snow possible in approximately ${snow.hoursOut} hour${snow.hoursOut > 1 ? 's' : ''}`;
-
-  return null;
 }
 function skyLabel(code, cloud) {
   if ([0].includes(code)) return 'Clear';
@@ -1116,14 +1024,7 @@ function renderState() {
   const ctxEl  = document.getElementById('ev-context');
   typeEl.textContent = line.label;
   typeEl.className = `ev-type state-${s.toLowerCase()}`;
-
-  // Append forecast insight to meaning when relevant
-  const fc = forecastInsight();
-  if (fc && s !== 'ACTIVE' && s !== 'DRAMA') {
-    ctxEl.textContent = `${line.meaning} · ${fc}`;
-  } else {
-    ctxEl.textContent = line.meaning;
-  }
+  ctxEl.textContent = line.meaning;
 }
 
 function tickLastEvent() {
