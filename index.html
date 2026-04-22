@@ -334,7 +334,7 @@ body.night-mode {
 .bottom-left .ev-type.state-quiet      { color: rgba(255,255,255,0.72); }
 .bottom-left .ev-type.state-transition { color: rgba(218,172,72,0.88); }
 .bottom-left .ev-type.state-drama      { color: rgba(218,172,72,1); }
-.bottom-left .ev-type.state-night      { color: rgba(200,210,220,0.72); }
+.bottom-left .ev-type.state-night      { color: rgba(200,215,235,0.90); }
 .bottom-left .ev-type.rare             { color: var(--rare); }
 
 .bottom-left .ev-context {
@@ -371,8 +371,8 @@ body.night-mode {
   position: absolute;
   bottom: 0; left: 0; right: 0; height: 40px;
   overflow: hidden;
-  background: rgba(0,0,0,0.28);
-  border-top: 1px solid rgba(255,255,255,0.07);
+  background: rgba(0,0,0,0.45);
+  border-top: 1px solid rgba(255,255,255,0.12);
   display: flex; align-items: center;
 }
 .ticker-track {
@@ -383,16 +383,22 @@ body.night-mode {
 @keyframes tick { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
 .ticker-item {
   font-size: 12px; font-weight: 400;
-  color: var(--w60); letter-spacing: 0.06em;
+  color: var(--w80); letter-spacing: 0.06em;
   padding: 0 52px; text-shadow: var(--ts3);
 }
 .ticker-dot { color: var(--w20); }
 
 /* ── NIGHT MODE OVERLAY ───────────────────────── */
-body.night-mode .top-left .name { color: rgba(200,210,225,0.70); }
-body.night-mode .top-right .clock { color: rgba(200,210,225,0.75); }
-body.night-mode .bottom-left .ev-type { opacity: 0.85; }
+body.night-mode .top-left .name { color: rgba(200,210,225,0.80); }
+body.night-mode .top-right .clock { color: rgba(200,210,225,0.85); }
 body.night-mode .ticker-wrap { background: rgba(0,0,0,0.40); }
+
+/* ── DEBUG MODE — force all content visible ───── */
+body.debug-mode .right-data,
+body.debug-mode .bottom-left .ev-type,
+body.debug-mode .bottom-left .ev-context,
+body.debug-mode .bottom-center .quote,
+body.debug-mode .seasonal-arc { opacity: 1 !important; }
 </style>
 </head>
 <body>
