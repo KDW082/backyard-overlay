@@ -316,10 +316,23 @@ body.night-mode {
   color: var(--w60); text-shadow: var(--ts2);
 }
 
+/* ── BOTTOM BACKING PANEL ─────────────────────── */
+.bottom-panel {
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 240px;
+  background: linear-gradient(0deg, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.50) 55%, rgba(0,0,0,0.0) 100%);
+  pointer-events: none; z-index: 1;
+}
+.top-panel {
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 130px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.0) 100%);
+  pointer-events: none; z-index: 1;
+}
 /* ── BOTTOM LEFT — STATE MODULE ───────────────── */
 .bottom-left {
   position: absolute;
-  bottom: 72px; left: 34px;
+  bottom: 140px; left: 34px;
   width: 540px;
 }
 /* State — primary voice, dominant */
@@ -353,7 +366,7 @@ body.night-mode {
 /* ── BOTTOM CENTER — QUOTE / JOURNAL ─────────── */
 .bottom-center {
   position: absolute;
-  bottom: 68px; left: 50%;
+  bottom: 136px; left: 50%;
   transform: translateX(-50%);
   width: 740px; text-align: center;
 }
@@ -402,6 +415,9 @@ body.debug-mode .seasonal-arc { opacity: 1 !important; }
 </style>
 </head>
 <body>
+
+<div class="top-panel"></div>
+<div class="bottom-panel"></div>
 
 <div class="noaa-bar" id="noaa-bar">
   <span class="nb-lbl">NWS Advisory</span>
