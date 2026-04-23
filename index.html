@@ -196,44 +196,43 @@ const LIFESTYLE={
 };
 
 // Short fragments for thought-decay effect — sound like a person, not a readout
+// Short fragments for thought-decay effect
 const FRAGMENTS=[
-  'Feels quieter than earlier.',
   'Air changed some.',
-  'Bit different than an hour ago.',
-  'Not doing much right now.',
-  'Hasn\'t really settled.',
-  'Something changed earlier.',
-  'Still feels a little off.',
-  'Clouds are doing more now.',
-  'Wouldn\'t take much for this to turn.',
+  'Light shifted a bit.',
+  'Trees are doing more than the ground right now.',
+  'Something moved earlier, just off frame.',
+  'Pressure came down since this morning.',
   'Lake would be flat right now.',
-  'Looks about the same.',
-  'Hard to say.',
-  'Not much to go on.',
-  'Nothing obvious at the moment.',
-  'Might open up later.'
+  'Cloud cover doing most of the work.',
+  'Wind picked up in the tops.',
+  'Good stretch of the day for this.',
+  'Edges are where to look.',
+  "Canopy's active.",
+  'Birds have been moving.',
+  'Worth watching the treeline.'
 ];
 
-// Fallback lines when Groq pool is empty — plainspoken, not dramatic
+// Fallback lines
 const FALLBACK=[
-  'Feels quieter than it should for this time of day.',
-  'Something\'s a little off from earlier.',
-  'Not giving much away right now.',
-  'Air feels different than it did.',
-  'Nothing obvious happening at the moment.',
-  'Hard to read right now.',
-  'Same as it\'s been for a while.',
-  'Bit unsettled still.',
-  'Not much to report.',
-  'Place is just doing its thing.'
+  'Air shifted a little since earlier.',
+  'Place is doing its thing.',
+  'Worth keeping an eye on the treeline.',
+  'Light is working in layers right now.',
+  'Conditions are moving, just slowly.',
+  'Good time to watch the edges.',
+  'The woods are active even when they look still.',
+  'Pressure has been working all day.',
+  'Things tend to build before they show.',
+  'Been a productive stretch of weather for wildlife.'
 ];
 
 // Memory callbacks — casual, human, not reporting
 const MEMORY_LINES={
-  wind_shift:['Hasn\'t really settled since earlier.','Still a little unsettled from before.','Something shifted. Hasn\'t resolved.','Different than it was an hour ago.'],
-  pressure_falling:['Feels like something\'s coming.','Air\'s been off for a bit.','Started dropping a while back.'],
+  wind_shift:['Wind changed since earlier.','Different direction than before.','Picked up some since this morning.','Shifted a bit — worth noting.'],
+  pressure_falling:['Pressure\'s been dropping.','Air\'s been building since earlier.','Barometer moved since this morning.'],
   pressure_rising:['Starting to even out.','Coming back a little.','More settled than earlier.'],
-  pressure_stable:['Holding about the same.','Not much movement there.'],
+  pressure_stable:['Pressure is level.','Holding steady up there.'],
   sky_shift:['Overhead changed since earlier.','Looks different than before.','Sky\'s been shifting.'],
   temp_up:['Warmed up some.','Bit warmer than it was.'],
   temp_down:['Cooled off from earlier.','Dropped some since then.']
@@ -285,7 +284,7 @@ const OFFHAND_MEMORY=[
   'Had a stretch like this last year.',
   'Same kind of afternoon as earlier in the week.',
   'Feels like it\'s repeating a bit.',
-  'Not much has changed since before.',
+  'Same kind of day as earlier in the week.',
   'This is how it was earlier too.',
   'Doesn\'t change fast around here.',
   'Looked about the same an hour ago.',
@@ -308,22 +307,18 @@ const NON_SEQUITUR=[
   'Takes a bit to read a place like this.'
 ];
 
-// Neutral lines — flat, non-interpretive, resets the brain
+// Neutral lines — grounded, not passive
 const NEUTRAL_LINES=[
-  'Just sitting there right now.',
-  'Not doing much.',
-  'Same as before.',
-  'Still about the same.',
-  'Nothing really happening.',
-  'Holding steady.',
-  'Doesn\'t look any different.',
-  'About what you\'d expect.',
-  'Not much to say.',
-  'Pretty standard.',
-  'Nothing worth noting.',
-  'Looks normal.',
-  'No real change.',
-  'About the same as it was.'
+  'Good stretch of the day to watch.',
+  'Place is working at its own pace.',
+  'Light is doing the usual thing for this hour.',
+  'Trees are moving more than the ground right now.',
+  'Conditions are about right for this time of year.',
+  'Forest is layered — takes a minute to read it.',
+  'Good angle for watching the transition zone.',
+  'Active stretch, even when it looks slow.',
+  'Patterns are there once you know what to look for.',
+  'The canopy and the understory are doing different things.'
 ];
 
 // Left turn lines — breaks pattern, feels human, slightly off-topic
@@ -331,7 +326,7 @@ const LEFT_TURN=[
   'Lost track of time for a second.',
   'Could be worse.',
   'Not bad, honestly.',
-  'Kind of a quiet day.',
+  'Good day to be outside.',
   "Wouldn't complain about it.",
   'Seen better, seen worse.',
   'Just one of those days.',
@@ -343,30 +338,33 @@ const LEFT_TURN=[
   'Kind of nice, actually.',
   'Easy day.'
 ];
+// Wildlife behavior — positive observational framing
 const WILDLIFE_LINES=[
   'Movement usually starts at the edges first.',
   'Deer tend to hang just outside the open before stepping in.',
   'Smaller birds usually give things away before you see anything bigger.',
   'Most activity out here happens just off camera first.',
-  'You’ll usually hear or sense something before it shows itself.',
   'Feeding patterns tend to come in short bursts, not steady flow.',
   'Animals rarely move straight through — they pause, then commit.',
   'Movement tends to follow the same paths once it starts.',
   'Things usually circle once before stepping into the open.',
-  'You’re usually seeing the second part of the movement, not the start.'
+  "You're usually seeing the second part of the movement, not the start.",
+  'The edges of the frame are where things tend to start.'
 ];
 
+// Regional history — grounding, depth
 const HISTORY_LINES=[
   'Higgins Lake is one of the clearest lakes in Michigan.',
-  'This area used to be heavy logging territory in the early 1900s.',
+  'This area was heavy logging territory in the early 1900s.',
   'Roscommon County was built around timber and rail movement.',
   'A lot of these forest lines were shaped by old logging routes.',
   'Wildlife patterns here still follow some of those old clearings.',
-  'This region sits right between major north-south wildlife corridors.',
+  'This region sits between major north-south wildlife corridors.',
   'The forest density here creates natural cover most of the day.',
   'Water proximity changes movement patterns more than people expect.'
 ];
 
+// Activity lines — soft lifestyle projection
 const ACTIVITY_LINES=[
   'Most people out here split the day between water and woods.',
   'Mornings usually start at the lake, evenings shift back to the trees.',
@@ -686,7 +684,7 @@ function fieldLine(){
   if([0,1].includes(code))opts.push('Sky\'s clear right now.','Opened up overhead.','Good light for the time of day.');
   if([2,3].includes(code))opts.push('Cloudy. Flat light.','Clouds doing most of the work.','Overcast. Makes things harder to read.');
   if([45,48].includes(code))opts.push('Fog cutting down the visibility.','Can\'t see far with this in.');
-  if([61,63,65,80,81,82].includes(code))opts.push('Rain coming through.','Wet out. Things are quieter.','Raining. Everything pulls tighter.');
+  if([61,63,65,80,81,82].includes(code))opts.push('Rain coming through.','Wet out. Things get closer to cover.','Rain changes the rhythm out here.');
   if([71,73,75,77].includes(code))opts.push('Snow coming down.','Snowing. Changes how everything looks.');
   // Wind feel — not labeled
   if(w.wind_speed_10m<2)opts.push('Not much moving out there.','Pretty still.');
@@ -717,9 +715,9 @@ function behaviorLine(){
   if(w.wind_speed_10m<4)opts.push('Low wind makes it easier to see what\'s moving.','Quiet enough to notice small things.');
   if(w.wind_speed_10m>12)opts.push('Too much wind to read much right now.','Hard to pick out details with this wind.');
   if(w.temperature_2m<=33)opts.push('Cold enough that sound carries farther.','Below freezing — sound travels differently.');
-  if([61,63,65,80,81,82].includes(w.weather_code))opts.push('Rain tends to push things under cover.','Things go quiet when it rains like this.');
+  if([61,63,65,80,81,82].includes(w.weather_code))opts.push('Rain tends to push things under cover.','Rain moves things into the tree line.');
   if(p==='dawn'||p==='dusk')opts.push('Good time of day to watch.','Best window of the day, probably.');
-  if(p==='midday')opts.push('Middle of the day — usually slower.','Midday tends to go quiet.');
+  if(p==='midday')opts.push('Middle of the day — movement shifts to shade.','Midday pushes things into cover.');
   if(p==='night')opts.push('Different set of rules once it gets dark.','Night changes what you can pick up.');
   const valid=opts.filter(lineFits);
   return valid.length?pick(shuffle(valid)):null;
@@ -792,33 +790,33 @@ function wildlifeLine(){
 }
 function historyLine(){
   const pool=HISTORY_LINES.filter(t=>lineFits(t)&&!isTooRepetitive(t));
-  return pool.length?pick(shuffle(pool)):pick(HISTORY_LINES);
+  return pool.length?pick(shuffle(pool)):null;
 }
 function activityLine(){
   const pool=ACTIVITY_LINES.filter(t=>lineFits(t)&&!isTooRepetitive(t));
-  return pool.length?pick(shuffle(pool)):pick(ACTIVITY_LINES);
+  return pool.length?pick(shuffle(pool)):null;
 }
 
 // ── STREAM ENGINE ────────────────────────────────────────────────────────────
 // Weighted mode selection — no fixed order
 const MODE_WEIGHTS={
-  groq:38,          // AI assisting, not leading
-  field:8,          // real conditions — restrained
+  groq:38,          // AI assisting
+  field:8,          // real conditions
   behavior:6,       // insight when warranted
-  context:10,       // regional grounding
-  lifestyle:8,      // subtle selling of the area
-  fragment:14,      // thought decay
+  context:10,       // regional grounding — increased
+  lifestyle:8,      // subtle — increased
+  fragment:10,      // thought decay
   memory:5,         // subtle callbacks
   curiosity:4,      // time-gated
   proximity:4,      // location grounding
-  casual:14,        // casual human thought
-  offhand_memory:8, // non-weather continuity
-  non_sequitur:12,  // breaks pattern
-  neutral:10,       // flat reset lines
-  left_turn:10,     // off-topic human moment
-  wildlife:18,      // wildlife knowledge and framing
-  history:8,        // area history
-  activity:8        // area activities
+  casual:12,        // casual human thought
+  offhand_memory:6, // non-weather continuity
+  non_sequitur:10,  // breaks pattern
+  neutral:8,        // flat reset
+  left_turn:8,      // off-topic human moment
+  wildlife:18,      // behavioral observation — new primary
+  history:8,        // regional depth — new
+  activity:8        // lifestyle projection — new
 };
 
 function pickMode(){
@@ -845,9 +843,8 @@ function generateNextLine(){
   const uncertainCount=last12.filter(l=>uncertainPat.test(l.toLowerCase())).length;
   const changeCount=last12.filter(l=>changePat.test(l.toLowerCase())).length;
   if(uncertainCount>=3||changeCount>=3){
-    const modePick = r()<0.5 ? 'neutral' : 'wildlife';
-    const t = modePick==='neutral' ? neutralLine() : wildlifeLine();
-    if(t){const cleaned=dialNarrator(t);if(cleaned&&lineFits(cleaned))return{t:cleaned,mode:modePick,dim:true,live:false};}
+    const t=r()<0.5?neutralLine():wildlifeLine();
+    if(t){const cleaned=dialNarrator(t);if(cleaned&&lineFits(cleaned))return{t:cleaned,mode:r()<0.5?'neutral':'wildlife',dim:true,live:false};}
   }
 
   const mode=pickMode();
@@ -881,7 +878,7 @@ function generateNextLine(){
 
   // Fragment injection: 6% — blocked if last 6 lines had 2+ fragments
   const recentFragments=S.streamModes.slice(-6).filter(m=>m==='fragment').length;
-  if(recentFragments<2&&r()<0.05&&mode!=='field'&&mode!=='curiosity'&&mode!=='proximity'&&mode!=='neutral'&&mode!=='left_turn'&&mode!=='wildlife'&&mode!=='history'&&mode!=='activity'){
+  if(recentFragments<2&&r()<0.05&&mode!=='field'&&mode!=='curiosity'&&mode!=='proximity'&&mode!=='neutral'&&mode!=='left_turn'&&mode!=='wildlife'){
     text=fragmentLine();
   }
 
@@ -896,7 +893,7 @@ function generateNextLine(){
   if(/\b(this (tells|means|shows) you|you can see that|this is why|that's why|which means)\b/.test(lc))return null;
   if(/\b(this tends to|when x happens|this is what happens)\b/.test(lc))return null;
 
-  if(mode!=='fragment'&&mode!=='neutral'&&mode!=='left_turn'&&mode!=='wildlife'&&mode!=='history'&&mode!=='activity'&&isTooRepetitive(cleaned))return null;
+  if(mode!=='fragment'&&mode!=='neutral'&&mode!=='left_turn'&&isTooRepetitive(cleaned))return null;
 
   if(mode==='curiosity'||mode==='proximity')S.lastCuriosity=Date.now();
 
