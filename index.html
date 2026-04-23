@@ -34,59 +34,59 @@ body.debug{background:#091523!important;}
 
 /* ── TOP BAR ──────────────────────────── */
 .top-bar{
-  position:absolute;top:18px;left:20px;right:20px;height:130px;
+  position:absolute;top:18px;left:20px;right:20px;height:96px;
   background:var(--blue-d);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   border:1px solid var(--border-hi);border-radius:var(--r);
   display:flex;align-items:center;justify-content:space-between;
-  padding:0 34px;z-index:10;
+  padding:0 36px;z-index:10;
   box-shadow:0 4px 36px rgba(0,0,0,0.40),inset 0 1px 0 rgba(150,195,255,0.15);
 }
-.tb-name{font-family:'DM Serif Display',Georgia,serif;font-style:italic;font-size:46px;color:var(--w);text-shadow:var(--ts);line-height:1;}
-.tb-sub{font-size:26px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--w5);text-shadow:var(--ts);margin-top:4px;}
-.tb-center{display:flex;flex-direction:column;align-items:center;gap:6px;}
-.tb-seasonal{font-size:28px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--gold);text-shadow:var(--ts);text-align:center;max-width:700px;line-height:1.2;}
-.led{display:flex;align-items:center;gap:8px;font-size:26px;font-weight:500;letter-spacing:0.08em;text-transform:uppercase;color:var(--w5);}
-.led .dot{width:8px;height:8px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px rgba(228,182,68,0.8);animation:pulse 4s ease-in-out infinite;flex-shrink:0;}
+.tb-name{font-family:'DM Serif Display',Georgia,serif;font-style:italic;font-size:48px;color:var(--w);text-shadow:var(--ts);line-height:1;}
+.tb-sub{display:none;}
+.tb-center{display:flex;align-items:center;gap:10px;}
+.tb-seasonal{display:none;}
+.led{display:flex;align-items:center;gap:10px;font-size:26px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:var(--w5);}
+.led .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px rgba(228,182,68,0.8);animation:pulse 4s ease-in-out infinite;flex-shrink:0;}
 .led.alert .dot{background:rgb(215,60,42);box-shadow:0 0 12px rgba(215,60,42,0.9);animation:pf 0.8s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:0.22}50%{opacity:1}}
 @keyframes pf{0%,100%{opacity:0.5}50%{opacity:1}}
-.tb-clock{font-size:52px;font-weight:300;color:var(--w);font-variant-numeric:tabular-nums;text-shadow:var(--ts);line-height:1;letter-spacing:0.02em;}
-.tb-weather{font-size:30px;font-weight:600;color:var(--w9);text-shadow:var(--ts);letter-spacing:0.02em;margin-top:3px;}
-.tb-date{font-size:24px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:var(--w5);text-shadow:var(--ts);margin-top:3px;}
+.tb-clock{font-size:36px;font-weight:400;color:var(--w);font-variant-numeric:tabular-nums;text-shadow:var(--ts);line-height:1.1;letter-spacing:0.02em;}
+.tb-weather{font-size:24px;font-weight:600;color:var(--w9);text-shadow:var(--ts);letter-spacing:0.02em;margin-top:1px;}
+.tb-date{font-size:20px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:var(--w5);text-shadow:var(--ts);margin-top:1px;}
+.tb-right{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;}
 
-/* ── NOAA ─────────────────────────────── */
-.noaa-bar{position:absolute;top:160px;left:20px;right:20px;background:rgba(195,50,28,0.22);border:1px solid rgba(195,50,28,0.36);border-radius:var(--r-sm);padding:8px 30px;display:none;align-items:center;gap:14px;z-index:10;}
+.noaa-bar{position:absolute;top:126px;left:20px;right:20px;background:rgba(195,50,28,0.22);border:1px solid rgba(195,50,28,0.36);border-radius:var(--r-sm);padding:8px 30px;display:none;align-items:center;gap:14px;z-index:10;}
 .noaa-bar.active{display:flex;}
-.nb-lbl{font-size:26px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(218,76,58,0.82);}
-.nb-txt{font-size:30px;font-weight:700;color:rgb(228,82,62);}
+.nb-lbl{font-size:28px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(218,76,58,0.82);}
+.nb-txt{font-size:32px;font-weight:700;color:rgb(228,82,62);}
 
 /* ── LEFT PANEL ──────────────────────── */
 .left-panel{
-  position:absolute;top:168px;left:20px;width:440px;
+  position:absolute;top:132px;left:20px;width:460px;
   background:var(--blue);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   border:1px solid var(--border);border-radius:var(--r);
-  padding:22px 26px;z-index:8;
-  display:flex;flex-direction:column;gap:18px;
+  padding:24px 28px;z-index:8;
+  display:flex;flex-direction:column;gap:20px;
   box-shadow:0 4px 28px rgba(0,0,0,0.28);
 }
-.db-lbl{font-size:22px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--w5);text-shadow:var(--ts);margin-bottom:6px;}
-.db-val{font-size:28px;font-weight:700;color:var(--w);text-shadow:var(--ts);line-height:1.1;}
-.db-sub{font-size:24px;font-weight:400;color:var(--w7);text-shadow:var(--ts);margin-top:3px;letter-spacing:0.02em;}
+.db-lbl{font-size:22px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--w5);text-shadow:var(--ts);margin-bottom:4px;}
+.db-val{font-size:32px;font-weight:700;color:var(--w);text-shadow:var(--ts);line-height:1.1;}
+.db-sub{font-size:26px;font-weight:400;color:var(--w7);text-shadow:var(--ts);margin-top:2px;letter-spacing:0.02em;}
 
 /* ── RIGHT PANEL ─────────────────────── */
 .right-panel{
-  position:absolute;top:168px;right:20px;width:440px;
+  position:absolute;top:132px;right:20px;width:460px;
   background:var(--blue);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   border:1px solid var(--border);border-radius:var(--r);
-  padding:22px 26px;z-index:8;
-  display:flex;flex-direction:column;gap:18px;
+  padding:24px 28px;z-index:8;
+  display:flex;flex-direction:column;gap:20px;
   box-shadow:0 4px 28px rgba(0,0,0,0.28);
 }
 .species-list{display:flex;flex-direction:column;gap:4px;}
-.sp{font-size:26px;font-weight:500;color:var(--w9);text-shadow:var(--ts);line-height:1.3;}
+.sp{font-size:28px;font-weight:500;color:var(--w9);text-shadow:var(--ts);line-height:1.3;}
 .sp.new{color:var(--gold);font-weight:700;}
 
 /* ── WINDOW OF INTEREST ──────────────── */
@@ -100,21 +100,21 @@ body.debug{background:#091523!important;}
 /* ── JOURNAL ─────────────────────────── */
 .journal-entry{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:760px;text-align:center;opacity:0;pointer-events:none;transition:opacity 1.2s ease;z-index:18;}
 .journal-entry.active{opacity:1;}
-.je-text{font-size:34px;font-weight:400;color:var(--w9);line-height:1.45;text-shadow:var(--ts2);background:var(--blue-d);border:1px solid var(--border);border-radius:var(--r);padding:30px 40px;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
-.je-attr{font-size:24px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--w3);text-shadow:var(--ts);margin-top:12px;}
+.je-text{font-size:36px;font-weight:400;color:var(--w9);line-height:1.45;text-shadow:var(--ts2);background:var(--blue-d);border:1px solid var(--border);border-radius:var(--r);padding:30px 40px;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
+.je-attr{font-size:26px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--w3);text-shadow:var(--ts);margin-top:12px;}
 
 /* ── MILESTONE ───────────────────────── */
 .milestone{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;pointer-events:none;transition:opacity 0.8s ease;z-index:19;}
 .milestone.active{opacity:1;}
-.ms-text{font-size:28px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--w9);text-shadow:var(--ts);background:var(--blue-d);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 30px;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
+.ms-text{font-size:30px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--w9);text-shadow:var(--ts);background:var(--blue-d);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 30px;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
 
 /* ── RARE BANNER ─────────────────────── */
 .rare-banner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:840px;text-align:center;background:var(--blue-d);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(72,198,138,0.22);border-top:2px solid rgba(72,198,138,0.52);border-radius:var(--r);padding:42px 68px 38px;opacity:0;pointer-events:none;transition:opacity 0.5s ease;z-index:22;box-shadow:0 8px 56px rgba(0,0,0,0.55);}
 .rare-banner.active{opacity:1;}
-.rb-cat{font-size:26px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:rgba(72,198,138,0.72);text-shadow:var(--ts);margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(72,198,138,0.15);}
-.rb-main{font-size:34px;font-weight:700;color:var(--w);line-height:1.4;text-shadow:var(--ts);}
-.rb-sub{font-size:26px;font-weight:400;color:var(--w7);margin-top:12px;line-height:1.5;text-shadow:var(--ts);}
-.rb-ts{font-size:24px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:rgba(72,198,138,0.58);margin-top:20px;}
+.rb-cat{font-size:28px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:rgba(72,198,138,0.72);text-shadow:var(--ts);margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(72,198,138,0.15);}
+.rb-main{font-size:38px;font-weight:700;color:var(--w);line-height:1.4;text-shadow:var(--ts);}
+.rb-sub{font-size:28px;font-weight:400;color:var(--w7);margin-top:12px;line-height:1.5;text-shadow:var(--ts);}
+.rb-ts{font-size:26px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:rgba(72,198,138,0.58);margin-top:20px;}
 
 /* ── BOTTOM BAR ──────────────────────── */
 .bottom-bar{
@@ -126,7 +126,7 @@ body.debug{background:#091523!important;}
   box-shadow:0 -4px 36px rgba(0,0,0,0.40),inset 0 1px 0 rgba(150,195,255,0.12);
 }
 .bottom-content{
-  display:grid;grid-template-columns:660px 1fr 300px;
+  display:grid;grid-template-columns:1fr auto;
   gap:0;padding:28px 36px 22px;
   border-bottom:1px solid rgba(255,255,255,0.09);
 }
@@ -139,22 +139,22 @@ body.debug{background:#091523!important;}
 .sm-state.s-drama{color:var(--gold);}
 .sm-state.s-night{color:rgba(155,195,235,0.92);}
 .sm-state.rare{color:var(--rare);}
-.sm-meaning{font-size:30px;font-weight:500;color:var(--w7);text-shadow:var(--ts);margin-top:8px;line-height:1.4;max-width:540px;}
-.sm-ago{font-size:26px;font-weight:400;color:var(--w3);text-shadow:var(--ts);margin-top:9px;font-variant-numeric:tabular-nums;letter-spacing:0.04em;}
+.sm-meaning{font-size:32px;font-weight:500;color:var(--w7);text-shadow:var(--ts);margin-top:8px;line-height:1.4;max-width:540px;}
+.sm-ago{font-size:28px;font-weight:400;color:var(--w3);text-shadow:var(--ts);margin-top:9px;font-variant-numeric:tabular-nums;letter-spacing:0.04em;}
 .elder-zone{text-align:center;padding:0 28px;}
 .eq-label{display:none;}
-.eq-quote{font-size:34px;font-weight:400;color:var(--w9);line-height:1.4;text-shadow:var(--ts);transition:opacity 1.4s ease;}
+.eq-quote{font-size:36px;font-weight:400;color:var(--w9);line-height:1.4;text-shadow:var(--ts);transition:opacity 1.4s ease;}
 .eq-quote.fade{opacity:0;}
 .cond-zone{text-align:right;}
 .cr{display:flex;justify-content:flex-end;align-items:baseline;gap:9px;margin-bottom:10px;}
-.cr-lbl{font-size:24px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--w5);text-shadow:var(--ts);}
-.cr-val{font-size:30px;font-weight:700;color:var(--w9);text-shadow:var(--ts);font-variant-numeric:tabular-nums;}
+.cr-lbl{font-size:26px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--w5);text-shadow:var(--ts);}
+.cr-val{font-size:32px;font-weight:700;color:var(--w9);text-shadow:var(--ts);font-variant-numeric:tabular-nums;}
 
 /* ── TICKER ──────────────────────────── */
 .ticker-strip{height:56px;overflow:hidden;display:flex;align-items:center;background:rgba(0,28,70,0.45);}
 .ticker-track{display:flex;white-space:nowrap;animation:tick 90s linear infinite;will-change:transform;}
 @keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.ticker-item{font-size:26px;font-weight:600;color:rgba(255,255,255,0.85);letter-spacing:0.06em;padding:0 56px;text-shadow:var(--ts);}
+.ticker-item{font-size:28px;font-weight:600;color:rgba(255,255,255,0.85);letter-spacing:0.06em;padding:0 56px;text-shadow:var(--ts);}
 .ticker-sep{color:rgba(255,255,255,0.28);}
 </style>
 </head>
@@ -163,16 +163,11 @@ body.debug{background:#091523!important;}
 <div class="top-bar">
   <div>
     <div class="tb-name">Northern Michigan's Backyard</div>
-    <div class="tb-sub">Live Wildlife Cam · Winter-Chard Chalet · Roscommon County, Michigan</div>
   </div>
-  <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
-    <div class="tb-seasonal" id="sa-text">—</div>
-    <div class="led" id="led"><span class="dot"></span><span id="led-label">Monitoring</span></div>
-  </div>
-  <div style="text-align:right">
+  <div class="tb-center"></div>
+  <div class="tb-right">
     <div class="tb-clock" id="clock">—</div>
-    <div class="tb-weather" id="tb-weather">—</div>
-    
+    <div class="tb-date" id="tb-date"></div>
   </div>
 </div>
 
@@ -182,14 +177,13 @@ body.debug{background:#091523!important;}
 </div>
 
 <div class="left-panel">
-  <div><div class="db-lbl">Solar Position</div><div class="db-val" id="solar-val">—</div><div class="db-sub" id="solar-sub">—</div></div>
+  <div><div class="db-lbl">Conditions</div><div class="db-val" id="weather-val">—</div><div class="db-sub" id="weather-sub">—</div></div>
   <div><div class="db-lbl">Lunar Phase</div><div class="db-val" id="moon-val">—</div><div class="db-sub" id="moon-sub">—</div></div>
   <div><div class="db-lbl">Barometric Pressure</div><div class="db-val" id="pressure-val">—</div><div class="db-sub" id="pressure-sub">—</div></div>
   <div><div class="db-lbl">Wind</div><div class="db-val" id="wind-val">—</div><div class="db-sub" id="wind-sub">—</div></div>
 </div>
 
 <div class="right-panel">
-  <div><div class="db-lbl">Feeder Status</div><div class="db-val" id="feeder-val">—</div><div class="db-sub" id="feeder-sub">—</div></div>
   <div><div class="db-lbl">Species · Observed Nearby</div><div class="species-list" id="species-list"></div></div>
 </div>
 
@@ -218,17 +212,10 @@ body.debug{background:#091523!important;}
 
 <div class="bottom-bar">
   <div class="bottom-content">
-    <div>
-      <div class="sm-state" id="sm-state"></div>
-      <div class="sm-meaning" id="sm-meaning"></div>
-      <div class="sm-ago" id="sm-ago"></div>
-    </div>
-    <div class="elder-zone">
-      <div class="eq-label">Field Note</div>
+    <div class="elder-zone" style="text-align:left;padding:0;">
       <div class="eq-quote" id="eq-quote">—</div>
     </div>
     <div class="cond-zone">
-      <div class="cr"><span class="cr-lbl">Session</span><span class="cr-val" id="c-session">—</span></div>
       <span id="c-temp" style="display:none"></span>
       <span id="c-sky" style="display:none"></span>
     </div>
@@ -262,19 +249,15 @@ function updateClock(){
   const now=new Date(),h=now.getHours(),disp=h%12||12,ampm=h>=12?'PM':'AM';
   document.getElementById('clock').textContent=`${disp}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${ampm}`;
   const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const doy=Math.floor((now-new Date(now.getFullYear(),0,0))/86400000);
-  document.getElementById('tb-date').textContent=`${M[now.getMonth()]} ${now.getDate()} · Day ${doy}`;
+  const dateEl=document.getElementById('tb-date');if(dateEl)dateEl.textContent=`${M[now.getMonth()]} ${now.getDate()}`;
   const el=(Date.now()-S.sessionStart)/1000,sh=Math.floor(el/3600),sm=Math.floor((el%3600)/60);
-  document.getElementById('c-session').textContent=`${sh}h ${pad(sm)}m`;
+  const csEl=document.getElementById('c-session');if(csEl)csEl.textContent=`${sh}h ${pad(sm)}m`;
   checkMilestones(now);updateWOI(now);
 }
 setInterval(updateClock,1000);updateClock();
 
 function updateSolar(){
-  const now=new Date(),sun=SunCalc.getPosition(now,LAT,LON),moon=SunCalc.getMoonIllumination(now),alt=sun.altitude*180/Math.PI;
-  const label=alt<-12?'Night':alt<-6?'Astro twilight':alt<-0.833?(now<SunCalc.getTimes(now,LAT,LON).solarNoon?'Pre-dawn':'Dusk'):alt<6?'Golden hour':alt<20?'Low sun':'Solar maximum';
-  document.getElementById('solar-val').textContent=label;
-  document.getElementById('solar-sub').textContent=`${alt>=0?'+':''}${alt.toFixed(1)}° altitude`;
+  const now=new Date(),moon=SunCalc.getMoonIllumination(now);
   document.getElementById('moon-val').textContent=moonName(moon.phase);
   document.getElementById('moon-sub').textContent=`${(moon.fraction*100).toFixed(0)}% illuminated`;
 }
@@ -289,14 +272,16 @@ async function updateWeather(){
     if(S.pressureTrend.length>8)S.pressureTrend.shift();
     S.forecast=parseFc(d.hourly);
     const sky=skyL(c.weather_code,c.cloud_cover);
-    document.getElementById('tb-weather').textContent=`${c.temperature_2m.toFixed(0)}°F · ${sky}`;
-    document.getElementById('c-temp').textContent=`${c.temperature_2m.toFixed(0)}°F`;
-    document.getElementById('c-sky').textContent=sky;
+    const twEl=document.getElementById('tb-weather');if(twEl)twEl.textContent=`${c.temperature_2m.toFixed(0)}°F · ${sky}`;
+    const wvEl=document.getElementById('weather-val');if(wvEl)wvEl.textContent=`${c.temperature_2m.toFixed(0)}°F · ${sky}`;
+    const wsEl=document.getElementById('weather-sub');if(wsEl)wsEl.textContent=`${c.cloud_cover}% cloud cover · ${c.wind_speed_10m<1?'calm':c.wind_speed_10m.toFixed(0)+' mph '+compassDir(c.wind_direction_10m)}`;
+    const ctEl=document.getElementById('c-temp');if(ctEl)ctEl.textContent=`${c.temperature_2m.toFixed(0)}°F`;
+    const csEl=document.getElementById('c-sky');if(csEl)csEl.textContent=sky;
     const t=pTrend();
-    document.getElementById('pressure-val').textContent=`${(c.pressure_msl*0.02953).toFixed(2)} inHg`;
-    document.getElementById('pressure-sub').textContent=t==='falling'?'↓ Falling — front approaching':t==='rising'?'↑ Rising — stabilizing':'→ Stable';
-    document.getElementById('wind-val').textContent=c.wind_speed_10m<1?'Calm':`${c.wind_speed_10m.toFixed(0)} mph ${compassDir(c.wind_direction_10m)}`;
-    document.getElementById('wind-sub').textContent=windL(c.wind_speed_10m);
+    const pvEl=document.getElementById('pressure-val');if(pvEl)pvEl.textContent=`${(c.pressure_msl*0.02953).toFixed(2)} inHg`;
+    const psEl=document.getElementById('pressure-sub');if(psEl)psEl.textContent=t==='falling'?'↓ Falling — front approaching':t==='rising'?'↑ Rising — stabilizing':'→ Stable';
+    const wvdEl=document.getElementById('wind-val');if(wvdEl)wvdEl.textContent=c.wind_speed_10m<1?'Calm':`${c.wind_speed_10m.toFixed(0)} mph ${compassDir(c.wind_direction_10m)}`;
+    const wsdEl=document.getElementById('wind-sub');if(wsdEl)wsdEl.textContent=windL(c.wind_speed_10m);
     renderState();buildTicker(c);
   }catch(e){console.warn(e);}
 }
@@ -306,11 +291,11 @@ function skyL(code,cloud){if([0].includes(code))return'Clear';if([1].includes(co
 function windL(mph){if(mph<1)return'No surface movement';if(mph<5)return'Barely perceptible';if(mph<10)return'Leaves stirring';if(mph<15)return'Small branches moving';if(mph<20)return'Canopy active';return'Sustained canopy motion';}
 updateWeather();setInterval(updateWeather,10*60*1000);
 
-async function updateNOAA(){try{const r=await fetch(`https://api.weather.gov/alerts/active?zone=${NOAA_ZONE}`,{headers:{'Accept':'application/geo+json','User-Agent':'backyard-overlay/9'}});const d=await r.json();const a=(d.features||[]).filter(f=>['Warning','Watch','Advisory'].some(t=>f.properties.event.includes(t)));const bar=document.getElementById('noaa-bar'),led=document.getElementById('led');if(a.length){document.getElementById('noaa-text').textContent=a[0].properties.event.toUpperCase();bar.classList.add('active');led.classList.add('alert');}else{bar.classList.remove('active');led.classList.remove('alert');}}catch(e){}}
+async function updateNOAA(){try{const r=await fetch(`https://api.weather.gov/alerts/active?zone=${NOAA_ZONE}`,{headers:{'Accept':'application/geo+json','User-Agent':'backyard-overlay/9'}});const d=await r.json();const a=(d.features||[]).filter(f=>['Warning','Watch','Advisory'].some(t=>f.properties.event.includes(t)));const bar=document.getElementById('noaa-bar'),led=document.getElementById('led');if(a.length){document.getElementById('noaa-text').textContent=a[0].properties.event.toUpperCase();bar.classList.add('active');if(led)led.classList.add('alert');}else{bar.classList.remove('active');if(led)led.classList.remove('alert');}}catch(e){}}
 updateNOAA();setInterval(updateNOAA,15*60*1000);
 
 const ARCS={spring:['Spring migration window · Roscommon County','Warbler movement active · late April through mid-May','Loon return window · Higgins Lake avg Apr 18','Woodcock display flights · dawn and dusk'],summer:['Fawn season · does with newborns nearby','Peak breeding activity · most species active','Hummingbird season · through late August'],autumn:['Fall migration corridor active','Rut preparation underway · October','Hawk migration active · September'],winter:['Deep winter · feeder traffic primary activity','Deer yarded in conifer cover','Great Horned Owl nesting · January–February']};
-function updateSeasonalArc(){const s=season(),pool=ARCS[s],doy=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000),pick=pool[Math.floor(Date.now()/(3*60*60*1000))%pool.length];document.getElementById('sa-text').textContent=`Day ${doy} · ${pick}`;}
+function updateSeasonalArc(){const el=document.getElementById('sa-text');if(!el)return;const s=season(),pool=ARCS[s],doy=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000),pick=pool[Math.floor(Date.now()/(3*60*60*1000))%pool.length];el.textContent=`Day ${doy} · ${pick}`;}
 updateSeasonalArc();setInterval(updateSeasonalArc,3*60*60*1000);
 
 function updateWOI(now){
@@ -327,12 +312,12 @@ const STATES={QUIET:{night:[{l:'Overnight stillness',m:'Nocturnal patterns settl
 const lsi={};
 function pickS(sk,sub){const pool=STATES[sk]?.[sub]||STATES[sk]?.default||Object.values(STATES[sk]||{})[0]||[{l:'—',m:'—'}];const key=`${sk}_${sub}`;let idx;do{idx=Math.floor(Math.random()*pool.length);}while(pool.length>1&&idx===lsi[key]);lsi[key]=idx;return pool[idx];}
 function compState(){const now=new Date(),h=now.getHours(),t=pTrend(),fq=Math.floor((Date.now()-S.feederQuietSince)/60000),times=SunCalc.getTimes(now,LAT,LON),msr=(times.sunrise-now)/60000,mss=(times.sunset-now)/60000,p=period();if(h<5||h>=22)return{s:'NIGHT',sub:'default'};if(h>=5&&h<8&&msr<10)return{s:'ACTIVE',sub:'dawn'};if(h>=17&&h<20&&mss>-20&&mss<30)return{s:'ACTIVE',sub:'dusk'};if(t==='falling'&&fq<15)return{s:'DRAMA',sub:'falling'};if(t==='rising')return{s:'DRAMA',sub:'rising'};if(msr>0&&msr<40)return{s:'BUILD',sub:'pre_dawn'};if(mss>0&&mss<50)return{s:'BUILD',sub:'pre_dusk'};if(t==='falling')return{s:'BUILD',sub:'pressure_drop'};if(fq>45&&p!=='night')return{s:'BUILD',sub:'post_quiet'};if(S.lastEventAt&&Date.now()-S.lastEventAt<8*60000&&S.lastEventState==='ACTIVE')return{s:'LULL',sub:'default'};if((h>=6&&h<7)||(h>=19&&h<20))return{s:'TRANSITION',sub:'light'};if(h>=11&&h<15)return{s:'QUIET',sub:'midday'};return{s:'QUIET',sub:'default'};}
-function renderState(){const{s,sub}=compState(),line=pickS(s,sub),el=document.getElementById('sm-state');el.textContent=line.l;el.className=`sm-state s-${s.toLowerCase()}`;const fc=fcInsight();document.getElementById('sm-meaning').textContent=fc&&s!=='ACTIVE'&&s!=='DRAMA'?`${line.m} · ${fc}`:line.m;}
-function tickAgo(){const el=document.getElementById('sm-ago');if(!S.lastEventAt||!S.lastEventLabel){el.textContent='';return;}el.textContent=`${S.lastEventLabel} · ${fmtAgo(Date.now()-S.lastEventAt)}`;}
+function renderState(){const{s,sub}=compState(),line=pickS(s,sub),el=document.getElementById('sm-state');if(el){el.textContent=line.l;el.className=`sm-state s-${s.toLowerCase()}`;}const me=document.getElementById('sm-meaning');if(me){const fc=fcInsight();me.textContent=fc&&s!=='ACTIVE'&&s!=='DRAMA'?`${line.m} · ${fc}`:line.m;}}
+function tickAgo(){const el=document.getElementById('sm-ago');if(!el)return;if(!S.lastEventAt||!S.lastEventLabel){el.textContent='';return;}el.textContent=`${S.lastEventLabel} · ${fmtAgo(Date.now()-S.lastEventAt)}`;}
 function logEvent(label){S.lastEventAt=Date.now();S.lastEventLabel=label;S.lastEventState=compState().s;S.eventCount++;tickAgo();renderState();}
 setInterval(renderState,60000);setInterval(tickAgo,1000);renderState();
 
-function simFeeder(){const h=new Date().getHours(),peak=(h>=5&&h<8)||(h>=16&&h<19);if(!S.feederActive&&Math.random()<(peak?0.40:0.08)/60){S.feederActive=true;document.getElementById('feeder-val').textContent='Active';document.getElementById('feeder-sub').textContent='Traffic in progress';logEvent('Feeder traffic · rotation in progress');setTimeout(()=>{S.feederActive=false;S.feederQuietSince=Date.now();document.getElementById('feeder-val').textContent='Quiet';document.getElementById('feeder-sub').textContent='Traffic ended';logEvent('Feeder quiet · traffic ended');},(25+Math.random()*90)*1000);}else if(!S.feederActive){const qm=Math.floor((Date.now()-S.feederQuietSince)/60000);document.getElementById('feeder-val').textContent=`Quiet · ${qm}m`;document.getElementById('feeder-sub').textContent=qm>50?'Below expected — arrival burst possible':peak?'Within active window':'Normal interval';}}
+function simFeeder(){const h=new Date().getHours(),peak=(h>=5&&h<8)||(h>=16&&h<19);if(!S.feederActive&&Math.random()<(peak?0.40:0.08)/60){S.feederActive=true;logEvent('Feeder traffic · rotation in progress');setTimeout(()=>{S.feederActive=false;S.feederQuietSince=Date.now();logEvent('Feeder quiet · traffic ended');},(25+Math.random()*90)*1000);}}
 setInterval(simFeeder,15000);simFeeder();
 
 const SEEDS=['Black-capped Chickadee','White-breasted Nuthatch','Downy Woodpecker','Blue Jay','American Goldfinch','Dark-eyed Junco','Hairy Woodpecker'];
