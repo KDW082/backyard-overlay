@@ -33,12 +33,12 @@ body.debug{background:#091523!important;}
 
 /* BAR */
 .bar{
-  position:absolute;top:18px;left:20px;right:20px;height:96px;
+  position:absolute;bottom:18px;top:auto;left:20px;right:20px;height:96px;
   background:var(--blue-d);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
-  border:1px solid var(--border-hi);border-radius:var(--r);
+  border:1px solid rgba(255,255,255,0.12);border-radius:var(--r);
   display:flex;align-items:stretch;z-index:10;overflow:hidden;
-  box-shadow:0 4px 36px rgba(0,0,0,0.40),inset 0 1px 0 rgba(150,195,255,0.15);
+  box-shadow:0 6px 30px rgba(0,0,0,0.45);
 }
 .bar-title{
   font-family:'DM Serif Display',Georgia,serif;font-style:italic;font-size:42px;
@@ -61,12 +61,12 @@ body.debug{background:#091523!important;}
   100%{transform:translateX(-50%);}
 }
 .bar-item{
-  font-size:28px;font-weight:500;color:var(--w9);
-  letter-spacing:0.02em;padding:0 44px;text-shadow:var(--ts);flex-shrink:0;
+  font-size:28px;font-weight:500;color:#ffffff;
+  letter-spacing:0.02em;padding:0 44px;text-shadow:0 2px 14px rgba(0,0,0,0.9);flex-shrink:0;opacity:1!important;
 }
-.bar-item.live{opacity:1;}
-.bar-item.dim{opacity:.62;font-style:italic;}
-.bar-sep{color:rgba(150,195,255,0.30);padding:0 2px;}
+.bar-item.live{opacity:1!important;}
+.bar-item.dim{opacity:1!important;font-style:normal;}
+.bar-sep{color:rgba(255,255,255,0.35);padding:0 6px;}
 .bar-time{
   padding:0 28px;flex-shrink:0;text-align:right;
   border-left:1px solid var(--border);
@@ -90,20 +90,6 @@ body.debug{background:#091523!important;}
 .noaa-bar.active{display:flex;}
 .nb-lbl{font-size:28px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(218,76,58,0.82);}
 .nb-txt{font-size:32px;font-weight:700;color:rgb(228,82,62);}
-
-/* WINDOW OF INTEREST */
-.window-interest{
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);
-  text-align:center;opacity:0;transition:opacity 1.8s ease;pointer-events:none;z-index:20;
-}
-.window-interest.active{opacity:1;}
-.wi-ey{font-size:28px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);text-shadow:var(--ts);margin-bottom:12px;}
-.wi-main{
-  font-family:'DM Serif Display',Georgia,serif;font-size:64px;font-style:italic;font-weight:400;
-  color:var(--w);line-height:1.1;text-shadow:0 2px 28px rgba(0,0,0,1),0 0 70px rgba(0,0,0,0.95);
-}
-.wi-sub{font-size:28px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,.75);text-shadow:var(--ts);margin-top:12px;}
-.wi-count{font-size:46px;font-weight:300;color:var(--gold);text-shadow:var(--ts);margin-top:8px;font-variant-numeric:tabular-nums;}
 
 /* MILESTONE */
 .milestone{
@@ -136,13 +122,6 @@ body.debug{background:#091523!important;}
   <span class="nb-txt" id="noaa-text">—</span>
 </div>
 
-<div class="window-interest" id="window-interest">
-  <div class="wi-ey" id="wi-eyebrow">—</div>
-  <div class="wi-main" id="wi-main">—</div>
-  <div class="wi-sub" id="wi-sub">—</div>
-  <div class="wi-count" id="wi-count"></div>
-</div>
-
 <div class="milestone" id="milestone">
   <div class="ms-text" id="ms-text">—</div>
 </div>
@@ -152,38 +131,25 @@ const LAT = 44.48;
 const LON = -84.72;
 const ELDER_ENDPOINT = '/.netlify/functions/elder-voice';
 const NOAA_ZONE = 'MIZ037';
-const MODE_WEIGHTS = {
-  field_observation: 40,
-  behavior_insight: 20,
-  northern_context: 15,
-  lifestyle_trigger: 15,
-  quiet_narrative: 10
-};
 
+// ── STATE ────────────────────────────────────────────────────────────────────
 const S = {
-  weather:null,
-  forecast:[],
-  air:null,
-  elderPool:[],
+  weather:null, forecast:[], air:null,
+  elderPool:[],       // accumulated Groq lines, newest first, cap 40
   sessionStart:Date.now(),
   pressureTrend:[],
   milestones:new Set(),
   centerBusy:false,
-  lineHistory:[],
-  modeHistory:[],
-  recentOpeners:[],
-  lastStrongLineAt:0,
-  memory:{
-    windDir:null,
-    windSpeed:null,
-    pressureTrend:null,
-    weatherCode:null,
-    temp:null,
-    callbacks:[]
-  }
+  stream:[],          // the live rolling stream of items
+  streamOpeners:[],   // last 20 openers seen in stream
+  streamModes:[],     // last 10 modes — prevents 3x same mode
+  lineHistory:[],     // last 120 displayed lines for Groq context
+  lastCuriosity:0,    // timestamp of last curiosity/proximity injection
+  memory:{windDir:null,windSpeed:null,pressureTrend:null,weatherCode:null,temp:null,callbacks:[]}
 };
 
-const MILESTONES = [
+// ── STATIC CONTENT ──────────────────────────────────────────────────────────
+const MILESTONES=[
   {min:10,text:'10 minutes of continuous observation'},
   {min:30,text:'30 minutes · most viewers have already left'},
   {min:60,text:'One hour · the patterns start to become visible'},
@@ -191,158 +157,127 @@ const MILESTONES = [
   {min:180,text:'Three hours · experienced viewer'}
 ];
 
-const PHENOLOGY = [
-  {s:[3,1],e:[3,21],n:'Ice-out window is open in Roscommon County.'},
-  {s:[4,1],e:[4,25],n:'Woodcock display flights usually run at dawn and dusk.'},
-  {s:[4,10],e:[4,25],n:'Loon return window is usually open around now.'},
-  {s:[4,20],e:[5,10],n:'Spring warbler migration is usually near peak now.'},
-  {s:[5,1],e:[5,20],n:'Morel season tends to open in mixed hardwood and pine.'},
-  {s:[5,25],e:[6,15],n:'Fireflies usually start showing up around early June.'},
-  {s:[6,15],e:[7,10],n:'Fawn season is usually active now.'},
-  {s:[8,1],e:[9,1],n:'Perseid window is open this month. Best after midnight.'},
-  {s:[8,20],e:[9,20],n:'Early color usually starts in the swamp maples first.'},
-  {s:[9,1],e:[10,1],n:'Hawk migration usually gets moving in September.'},
-  {s:[9,15],e:[10,15],n:'Peak fall color usually lives in this window.'},
-  {s:[10,20],e:[11,20],n:'Rut season tends to sharpen the edges at dawn and dusk.'},
-  {s:[12,10],e:[1,10],n:'Ice formation usually starts in the bays before the basins.'},
-  {s:[1,15],e:[2,28],n:'Deep winter usually leaves chickadees and nuthatches doing most of the visible work.'}
+const PHENOLOGY=[
+  {s:[3,1],e:[3,21],n:'Ice-out window open in Roscommon County.'},
+  {s:[4,1],e:[4,25],n:'Woodcock flights usually run at dawn and dusk.'},
+  {s:[4,10],e:[4,25],n:'Loon return window open around now.'},
+  {s:[4,20],e:[5,10],n:'Warbler migration near peak.'},
+  {s:[5,1],e:[5,20],n:'Morel season open in mixed hardwood and pine.'},
+  {s:[5,25],e:[6,15],n:'Fireflies start showing up around early June.'},
+  {s:[6,15],e:[7,10],n:'Fawn season active now.'},
+  {s:[8,1],e:[9,1],n:'Perseid window open. Best after midnight.'},
+  {s:[8,20],e:[9,20],n:'Early color starts in the swamp maples.'},
+  {s:[9,1],e:[10,1],n:'Hawk migration gets moving in September.'},
+  {s:[9,15],e:[10,15],n:'Peak fall color window.'},
+  {s:[10,20],e:[11,20],n:'Rut season. Edges sharpen at dawn and dusk.'},
+  {s:[12,10],e:[1,10],n:'Ice forming in the bays before the basins.'},
+  {s:[1,15],e:[2,28],n:'Deep winter. Chickadees and nuthatches doing most of the work.'}
 ];
 
-const REGIONAL_CONTEXT = [
-  'Grayling, Houghton Lake, and Roscommon all sit inside half an hour from here.',
-  'Traverse City, Petoskey, and Mackinac are day trips, not quick runs.',
-  'This spot sits in the woods — Higgins Lake is under a mile away.',
-  'Grayling trails, Roscommon shops, and Houghton Lake access are all easy from here.',
-  'Close towns do the daily work around here. The bigger names take more planning.',
-  'You can run local without feeling stuck, and still reach the longer-name spots when you want to.'
-];
-
-const DESTINATION_LINES = [
-  'Grayling is close — trails, river access, and downtown are easy from here.',
+const REGIONAL=[
+  'Grayling, Houghton Lake, and Roscommon all inside half an hour.',
+  'Traverse City, Petoskey, Mackinac — day trips, not quick runs.',
+  'In the woods here. Lake is under a mile.',
+  'Close towns do the daily work. Bigger names take more planning.',
+  'Grayling trails, Roscommon shops, Houghton Lake — all easy from here.',
+  'Grayling is close — trails, river, downtown.',
   'Roscommon and Houghton Lake stay in the quick-run zone.',
-  'Traverse City runs west — better as a full day than a quick stop.',
-  'Petoskey is a longer northbound run if you want shops, harbor, and a change of pace.',
-  'Mackinac is worth the day. Not the kind of place you just pop over to.'
+  'Traverse City runs west. Better as a full day.',
+  'Petoskey — longer northbound run if you want shops and harbor.',
+  'Mackinac is worth the day. Not a quick hop.'
 ];
 
-const LIFESTYLE_LINES = {
-  spring:[
-    'Good morning for the lake.',
-    'Spring out here plays better when the day stays loose.',
-    'Shoulder season keeps the region open without the heavier summer pace.'
-  ],
-  summer:[
-    'Water’s probably still right now.',
-    'Summer plays best when the day splits — water first, woods later.',
-    'Boating, golf, trail runs, and a fire after dark all fit the same day.'
-  ],
-  autumn:[
-    'Cool evening. Fire would make sense.',
-    'Autumn traffic thins and the woods take the lead again.',
-    'Fall up here rewards people who actually want to be outside.'
-  ],
-  winter:[
-    'Cold tonight. Sound carries more.',
-    'Winter shifts the draw from water to woods, trails, and ski runs.',
-    'Cold-clear days make the whole area feel sharper and less crowded.'
-  ]
+const LIFESTYLE={
+  spring:['Good morning for the lake.','Spring plays better when the day stays loose.','Shoulder season — region stays open.'],
+  summer:['Water is probably still right now.','Summer splits cleanly — water first, woods later.','Boating, golf, trails, fire after dark.'],
+  autumn:['Cool evening. Fire would make sense.','Autumn traffic thins. Woods take the lead.','Fall rewards people who want to be outside.'],
+  winter:['Cold tonight. Sound carries more.','Winter shifts the draw from water to woods.','Cold-clear days make the whole area feel sharper.']
 };
 
-const TIME_LOCAL_LINES = {
-  dawn:[
-    'First light does most of the work out here.',
-    'Dawn usually makes the woods feel busier than they look.',
-    'This is the part of the morning where less can still mean more.'
-  ],
-  morning:[
-    'Morning settles slower under tree cover.',
-    'The place usually reads cleaner once the early edge wears off.',
-    'Mornings out here tend to open in layers.'
-  ],
-  midday:[
-    'Midday usually flattens things out.',
-    'This part of the day often goes quieter.',
-    'Midday is when you notice the place more than the motion.'
-  ],
-  afternoon:[
-    'Afternoon starts leaning toward evening once the light softens.',
-    'This is where the day either opens back up or shuts down early.',
-    'Afternoon usually tells you what dusk is going to do.'
-  ],
-  dusk:[
-    'Last light usually carries more tension.',
-    'Dusk is when even quiet stretches feel temporary.',
-    'This is the window where the place starts changing its mind.'
-  ],
-  night:[
-    'Night runs on different rules out here.',
-    'After dark, sound usually tells you more than sight.',
-    'Night settles in slow under the trees, then all at once.'
-  ]
+// Short fragments for thought-decay effect
+const FRAGMENTS=[
+  'Still.','Not yet.','Could change.','Wind held.','Same sky.',
+  'Quiet still.','Hard to tell.','Not giving much.','Could stay like this.',
+  'Nothing obvious.','Waiting.','Might shift.','Not much.','Holding.'
+];
+
+// Fallback lines when Groq pool is empty
+const FALLBACK=[
+  'Wind hasn\'t settled.',
+  'Pressure\'s been off all afternoon.',
+  'Sky keeps doing something.',
+  'Nothing obvious yet.',
+  'Could open up later.',
+  'Not giving much away right now.',
+  'Feels like it\'s between things.',
+  'Same weather. Different feel.',
+  'Whatever was moving has paused.',
+  'Hard to read at the moment.',
+  'Didn\'t really settle after that.',
+  'Worth watching a little longer.'
+];
+
+// Memory callbacks — human tone, not report tone
+const MEMORY_LINES={
+  wind_shift:['Didn\'t settle after that.','Still hasn\'t evened out.','Something shifted earlier.','Wind changed. Never really resolved.'],
+  pressure_falling:['Pressure\'s been dropping.','Something\'s off from earlier.','Feels like it turned.'],
+  pressure_rising:['Pressure came back some.','Starting to even out.'],
+  pressure_stable:['Holding steady.','Nothing moved much.'],
+  sky_shift:['Sky changed since earlier.','Different overhead than before.'],
+  temp_up:['Warmed up some.','Came up a few degrees.'],
+  temp_down:['Dropped off since earlier.','Cooler than it was.']
 };
 
-const FIELD_JOURNAL_LINES = {
-  all:[
-    'Nothing changed yet.',
-    'Still not revealing much.',
-    'Feels like it\'s between shifts.',
-    'Not showing anything obvious right now.',
-    'The place isn\'t giving much away right now.',
-    'Whatever was happening earlier has paused.'
-  ],
-  dawn:[
-    'First light always makes the woods look more settled than they are.',
-    'This is when the edges start to matter.'
-  ],
-  morning:[
-    'The early rush is over. Now it gets harder to read.'
-  ],
-  midday:[
-    'Midday can look dead and still keep changing under it.'
-  ],
-  afternoon:[
-    'The whole place starts leaning toward dusk from here.'
-  ],
-  dusk:[
-    'Last light covers a lot until it doesn’t.',
-    'Stillness lies more at dusk.'
-  ],
-  night:[
-    'After dark, sound usually gets there first.'
-  ]
-};
+// Curiosity lines — observational, not bait. Fire every 3–6 min max.
+const CURIOSITY=[
+  'People usually ask where this is.',
+  'Takes a bit before it starts to make sense.',
+  'Not obvious unless you\'ve been here.',
+  'Most people don\'t know this area exists.',
+  'Hard to find on purpose. Easy to stumble into.',
+  'You start to recognize the rhythms after a while.',
+  'Doesn\'t look like much at first.',
+  'The kind of place people come back to.',
+  'Once you know where it is, you get it.',
+  'Not the kind of spot you share immediately.'
+];
 
+// Proximity lines — reinforce where this is without selling it
+const PROXIMITY=[
+  'Lake\'s right there.',
+  'Everything\'s closer than it feels.',
+  'Water\'s under a mile from here.',
+  'Higgins Lake sits just down the road.',
+  'Nothing between here and the water.',
+  'You can see the sky open up where the lake starts.',
+  'Close enough to hear it on a still morning.'
+];
+
+// ── UTILITY ──────────────────────────────────────────────────────────────────
 function pad(n){return String(n).padStart(2,'0');}
 function shuffle(arr){return [...arr].sort(()=>Math.random()-0.5);}
 function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function r(){return Math.random();}
 function tokenize(s){return String(s).toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean);}
-function opener(s){return tokenize(s).slice(0,2).join(' ');}
+function opener2(s){return tokenize(s).slice(0,2).join(' ');}
 function period(){
   const h=new Date().getHours();
-  if(h<5)return'night';
-  if(h<8)return'dawn';
-  if(h<12)return'morning';
-  if(h<15)return'midday';
-  if(h<19)return'afternoon';
-  if(h<22)return'dusk';
+  if(h<5)return'night'; if(h<8)return'dawn'; if(h<12)return'morning';
+  if(h<15)return'midday'; if(h<19)return'afternoon'; if(h<22)return'dusk';
   return'night';
 }
 function season(){
   const m=new Date().getMonth();
-  if(m<2||m===11)return'winter';
-  if(m<5)return'spring';
-  if(m<8)return'summer';
-  return'autumn';
+  if(m<2||m===11)return'winter'; if(m<5)return'spring';
+  if(m<8)return'summer'; return'autumn';
 }
 function compassDir(d){
-  return ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d/22.5)%16];
+  return['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d/22.5)%16];
 }
 function pTrend(){
   if(S.pressureTrend.length<2)return'stable';
   const d=S.pressureTrend[S.pressureTrend.length-1].p-S.pressureTrend[0].p;
-  if(d>2)return'rising';
-  if(d<-2)return'falling';
-  return'stable';
+  return d>2?'rising':d<-2?'falling':'stable';
 }
 function phenNow(){
   const now=new Date(),m=now.getMonth()+1,d=now.getDate();
@@ -352,45 +287,20 @@ function phenNow(){
     return s<=e?cur>=s&&cur<=e:cur>=s||cur<=e;
   });
 }
-function lineSimilarity(a,b){
-  const A=new Set(tokenize(a)),B=new Set(tokenize(b));
-  if(!A.size||!B.size)return 0;
-  let overlap=0;
-  A.forEach(t=>{if(B.has(t))overlap++;});
-  const j=overlap/(A.size+B.size-overlap);
-  const prefix=opener(a)&&opener(a)===opener(b)?0.25:0;
-  const len=Math.abs(a.length-b.length)<8?0.1:0;
-  return j+prefix+len;
-}
 function skyL(code,cloud){
-  if([0].includes(code))return'Clear';
-  if([1].includes(code))return'Mainly clear';
-  if([2].includes(code))return'Partly cloudy';
-  if([3].includes(code))return'Overcast';
-  if([45,48].includes(code))return'Fog';
-  if([51,53,55].includes(code))return'Drizzle';
+  if([0].includes(code))return'Clear'; if([1].includes(code))return'Mainly clear';
+  if([2].includes(code))return'Partly cloudy'; if([3].includes(code))return'Overcast';
+  if([45,48].includes(code))return'Fog'; if([51,53,55].includes(code))return'Drizzle';
   if([61,63,65,80,81,82].includes(code))return'Rain';
   if([71,73,75,77].includes(code))return'Snow';
   if([95,96,99].includes(code))return'Thunderstorm';
   return`${cloud}% cloud`;
 }
-function windL(mph){
-  if(mph<1)return'No surface movement';
-  if(mph<5)return'Barely perceptible';
-  if(mph<10)return'Leaves stirring';
-  if(mph<15)return'Small branches moving';
-  if(mph<20)return'Canopy active';
-  return'Sustained canopy motion';
-}
 function moonName(p){
-  if(p<0.03||p>0.97)return'New Moon';
-  if(p<0.22)return'Waxing Crescent';
-  if(p<0.28)return'First Quarter';
-  if(p<0.47)return'Waxing Gibbous';
-  if(p<0.53)return'Full Moon';
-  if(p<0.72)return'Waning Gibbous';
-  if(p<0.78)return'Last Quarter';
-  return'Waning Crescent';
+  if(p<0.03||p>0.97)return'New Moon'; if(p<0.22)return'Waxing Crescent';
+  if(p<0.28)return'First Quarter'; if(p<0.47)return'Waxing Gibbous';
+  if(p<0.53)return'Full Moon'; if(p<0.72)return'Waning Gibbous';
+  if(p<0.78)return'Last Quarter'; return'Waning Crescent';
 }
 function scaleOverlay(){
   const sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);
@@ -400,393 +310,432 @@ function scaleOverlay(){
 }
 function showC(el,ms,cb){
   if(S.centerBusy)return false;
-  S.centerBusy=true;
-  el.classList.add('active');
-  setTimeout(()=>{
-    el.classList.remove('active');
-    setTimeout(()=>{
-      S.centerBusy=false;
-      if(cb)cb();
-    },1200);
-  },ms);
+  S.centerBusy=true; el.classList.add('active');
+  setTimeout(()=>{el.classList.remove('active');setTimeout(()=>{S.centerBusy=false;if(cb)cb();},1200);},ms);
   return true;
-}
-function rememberLine(item){
-  S.lineHistory.push(item.t);
-  if(S.lineHistory.length>120)S.lineHistory.shift();
-  S.modeHistory.push(item.mode||item.type||'misc');
-  if(S.modeHistory.length>120)S.modeHistory.shift();
-  S.recentOpeners.push(opener(item.t));
-  if(S.recentOpeners.length>40)S.recentOpeners.shift();
 }
 function normalizeElderLines(lines){
   return(lines||[]).map(l=>{
-    if(typeof l==='string')return{text:l,mode:'quiet_narrative'};
-    return{text:l.text||l.line||'',mode:l.mode||'quiet_narrative'};
-  }).filter(x=>x.text);
+    if(typeof l==='string')return{text:l};
+    return{text:l.text||l.line||''};
+  }).filter(x=>x.text&&x.text.trim());
 }
-function dialNarrator(text){
-  if(!text)return text;
-  let out=text.trim();
-  const kills=['beautiful','amazing','perfect','magical','peaceful','serene','escape','getaway','experience'];
-  kills.forEach(w=>{
-    const r=new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'gi');
-    out=out.replace(r,'');
+function lineSimilarity(a,b){
+  const A=new Set(tokenize(a)),B=new Set(tokenize(b));
+  if(!A.size||!B.size)return 0;
+  let overlap=0; A.forEach(t=>{if(B.has(t))overlap++;});
+  const j=overlap/(A.size+B.size-overlap);
+  return j+(opener2(a)===opener2(b)?0.25:0);
+}
+function dialNarrator(t){
+  if(!t)return null;
+  let out=t.trim();
+
+  // Kill hype words
+  ['beautiful','amazing','perfect','magical','peaceful','serene','escape','getaway','incredible','stunning'].forEach(w=>{
+    out=out.replace(new RegExp(`\\b${w}\\b`,'gi'),'');
   });
-  const swaps=[
-    [/\bstarting to\b/gi,'beginning to'],
-    [/\bholding at\b/gi,'sitting at'],
-    [/\bconditions like this\b/gi,'this setup'],
-    [/\bseasonal traffic\b/gi,'more traffic'],
-    [/\bshoreline\b/gi,'water']
-  ];
-  swaps.forEach(([a,b])=>out=out.replace(a,b));
+
+  // Kill AI sentence openers (full phrase removal)
+  out=out.replace(/^(this is when[^.!?]*[.!?]?\s*)/i,'');
+  out=out.replace(/^(this part of[^.!?]*[.!?]?\s*)/i,'');
+  out=out.replace(/^(conditions like this[^.!?]*[.!?]?\s*)/i,'');
+  out=out.replace(/^(this is the (moment|window|time|part)[^.!?]*[.!?]?\s*)/i,'');
+  out=out.replace(/^(this light window[^.!?]*[.!?]?\s*)/i,'');
+  out=out.replace(/^(usually means[^.!?]*[.!?]?\s*)/i,'');
+
+  // Shorten long sentences — cut at last natural break under 80 chars
   out=out.replace(/\s+/g,' ').replace(/\s+([,.—])/g,'$1').trim();
-  if(out.length>92){
-    const cut=out.lastIndexOf(' ',88);
-    out=out.slice(0,cut>55?cut:88).trim();
+  if(out.length>88){
+    // Try to cut at sentence boundary first
+    const sentEnd=out.search(/[.!?]\s+[A-Z]/);
+    if(sentEnd>20&&sentEnd<80){out=out.slice(0,sentEnd+1).trim();}
+    else{const cut=out.lastIndexOf(' ',82);out=out.slice(0,cut>40?cut:82).trim();}
   }
-  if(out&&!/[.!?]$/.test(out))out+='.';
+
+  // Fragment truncation — 15% chance to cut a full line short with ellipsis feel
+  if(out.split(' ').length>6&&r()<0.15){
+    const words=out.split(' ');
+    const cutAt=Math.floor(words.length*0.55)+1;
+    out=words.slice(0,cutAt).join(' ').replace(/[,.]$/,'')+'…';
+    return out.charAt(0).toUpperCase()+out.slice(1);
+  }
+
+  if(out&&!/[.!?…]$/.test(out))out+='.';
+  if(!out||out.length<4)return null;
   return out.charAt(0).toUpperCase()+out.slice(1);
 }
-function lineFitsCurrentContext(text){
-  const lc=String(text).toLowerCase();
-  const s=season(),p=period();
-  const seasonConflicts={
-    spring:['rut','fall color','deep winter','ski','fresh snow','ice formation'],
+function lineFits(text){
+  const lc=String(text).toLowerCase(),s=season(),p=period();
+  const SC={spring:['rut','fall color','deep winter','ski','fresh snow','ice formation'],
     summer:['rut','fall color','deep winter','fresh snow','ski','ice formation','ice-out'],
     autumn:['deep winter','fresh snow','ski','ice formation','spring warbler','ice-out'],
-    winter:['dock coffee','boating','golf','fireflies','morel','warbler','fawn season','fall color']
-  };
-  const periodConflicts={
-    dawn:['midday','after dark','night runs','last light','dusk'],
+    winter:['dock coffee','boating','golf','fireflies','morel','warbler','fawn season','fall color']};
+  const PC={dawn:['midday','after dark','night runs','last light'],
     morning:['after dark','night runs','last light','dusk'],
     midday:['after dark','night runs','first light','dawn'],
     afternoon:['after dark','night runs','first light','dawn'],
     dusk:['first light','midday','morning settles'],
-    night:['first light','dock coffee','midday','afternoon starts']
-  };
-  if((seasonConflicts[s]||[]).some(k=>lc.includes(k)))return false;
-  if((periodConflicts[p]||[]).some(k=>lc.includes(k)))return false;
+    night:['first light','dock coffee','midday','afternoon starts']};
+  if((SC[s]||[]).some(k=>lc.includes(k)))return false;
+  if((PC[p]||[]).some(k=>lc.includes(k)))return false;
   return true;
 }
-function looksRepetitive(text,mode){
-  const recent=S.lineHistory.slice(-40);
-  const badWords=['beautiful','amazing','perfect','magical','peaceful','serene'];
+function isTooRepetitive(text){
+  const lc=text.toLowerCase();
   const toks=tokenize(text);
-  if(toks.filter(t=>badWords.includes(t)).length>0)return true;
-  if(S.recentOpeners.slice(-16).includes(opener(text)))return true;
-  if(S.modeHistory.slice(-2).every(m=>m===mode))return true;
-  if(!lineFitsCurrentContext(text))return true;
-  return recent.some(r=>lineSimilarity(r,text)>0.42);
-}
-function modeOrder(count){
-  const pool=[];
-  Object.entries(MODE_WEIGHTS).forEach(([k,v])=>{for(let i=0;i<v;i++)pool.push(k);});
-  const out=[];
-  while(out.length<count&&pool.length){
-    let choice=pick(pool),tries=0;
-    while(out.length>=2&&out[out.length-1]===choice&&out[out.length-2]===choice&&tries<20){
-      choice=pick(pool);tries++;
-    }
-    out.push(choice);
-  }
-  return out;
-}
-function pressureMeaning(){
-  const tr=pTrend();
-  if(tr==='falling')return'Pressure dropped. Usually changes things.';
-  if(tr==='rising')return'Pressure came back some.';
-  return'Pressure stayed level.';
-}
-function memoryCallbackPool(){
-  const now=Date.now();
-  return(S.memory.callbacks||[])
-    .filter(c=>now-c.at>20*60*1000)
-    .map(c=>c.text);
-}
-function updateMemory(){
-  if(!S.weather)return;
-  const now=Date.now();
-  const currentPressureTrend=pTrend();
 
-  if(S.memory.windDir!==null){
-    const dirChanged=Math.abs(S.weather.wind_direction_10m-S.memory.windDir)>35;
-    const speedChanged=Math.abs(S.weather.wind_speed_10m-S.memory.windSpeed)>=4;
-    if(dirChanged||speedChanged){
-      S.memory.callbacks.push({type:'wind_shift',at:now,text:'Wind changed earlier. Never really settled.'});
-    }
+  // Hard-banned openers and AI phrasing
+  if(/^(this is|this part|this window|this place|conditions like|this light|this is when|this is the moment|usually means|what this means)/.test(lc))return true;
+  if(/\b(conditions like this|this part of the day|this time of day|this is when)\b/.test(lc))return true;
+
+  // Opener collision — last 16
+  const op=opener2(text);
+  if(S.streamOpeners.slice(-16).includes(op))return true;
+
+  // Token overlap against last 20 lines
+  if(S.lineHistory.slice(-20).some(prev=>lineSimilarity(prev,text)>0.40))return true;
+
+  // Structural similarity — reject if same 3-word opener appeared in last 8
+  const open3=toks.slice(0,3).join(' ');
+  if(open3.length>4&&S.lineHistory.slice(-8).some(prev=>tokenize(prev).slice(0,3).join(' ')===open3))return true;
+
+  // Keyword saturation — suppress if any single key word used 3x in last 6 lines
+  const keyWords=['wind','light','pressure','sky','usually','still','feels','lake'];
+  for(const kw of keyWords){
+    if(S.lineHistory.slice(-6).filter(l=>l.toLowerCase().includes(kw)).length>=3&&lc.includes(kw))return true;
   }
 
-  if(S.memory.pressureTrend!==null&&S.memory.pressureTrend!==currentPressureTrend){
-    S.memory.callbacks.push({
-      type:'pressure_shift',
-      at:now,
-      text:currentPressureTrend==='falling'
-        ?'Pressure turned and stayed unsettled.'
-        :currentPressureTrend==='rising'
-        ?'Pressure recovered a bit.'
-        :'Pressure leveled out.'
-    });
-  }
+  // "usually" throttle — max 1 in last 4
+  if(S.lineHistory.slice(-4).some(l=>l.toLowerCase().includes('usually'))&&lc.includes('usually'))return true;
 
-  if(S.memory.weatherCode!==null&&S.memory.weatherCode!==S.weather.weather_code){
-    S.memory.callbacks.push({type:'sky_shift',at:now,text:'Sky changed since earlier.'});
-  }
-
-  if(S.memory.temp!==null&&Math.abs(S.weather.temperature_2m-S.memory.temp)>=5){
-    S.memory.callbacks.push({
-      type:'temp_shift',
-      at:now,
-      text:S.weather.temperature_2m>S.memory.temp?'It warmed up a bit.':'Temperature dropped off some.'
-    });
-  }
-
-  S.memory.windDir=S.weather.wind_direction_10m;
-  S.memory.windSpeed=S.weather.wind_speed_10m;
-  S.memory.pressureTrend=currentPressureTrend;
-  S.memory.weatherCode=S.weather.weather_code;
-  S.memory.temp=S.weather.temperature_2m;
-  S.memory.callbacks=S.memory.callbacks.filter(c=>now-c.at<3*60*60*1000).slice(-10);
+  return false;
 }
-function lessonPool(){
-  const out=[];
-  const p=period(),s=season();
-  if(S.weather){
-    if(S.weather.wind_speed_10m>=10)out.push('Wind in the tops usually tells you more than the ground does.');
-    if([61,63,65,80,81,82].includes(S.weather.weather_code))out.push('Rain usually pulls smaller movement tighter to cover.');
-    if(S.weather.temperature_2m<=35)out.push('Cold air carries sound farther.');
-    if(S.weather.temperature_2m>=75)out.push('Heat flattens the middle of the day first.');
-  }
-  if(p==='dusk')out.push('Last light usually compresses things into a shorter window.');
-  if(p==='night')out.push('After dark, sound usually reads the place faster than sight.');
-  if(s==='autumn')out.push('In fall, edges matter more once light starts dropping.');
-  if(s==='winter')out.push('Fresh cold makes small sound travel farther through the trees.');
-  return out;
-}
+
+// ── MEMORY ───────────────────────────────────────────────────────────────────
 function parseFc(h){
   if(!h||!h.time)return[];
   const now=new Date(),r=[];
   for(let i=0;i<h.time.length&&r.length<6;i++){
     const t=new Date(h.time[i]);
-    if(t>now){
-      r.push({
-        hoursOut:Math.round((t-now)/3600000),
-        temp:h.temperature_2m[i],
-        code:h.weather_code[i],
-        precipProb:h.precipitation_probability[i],
-        wind:h.wind_speed_10m[i]
-      });
-    }
+    if(t>now)r.push({hoursOut:Math.round((t-now)/3600000),temp:h.temperature_2m[i],code:h.weather_code[i],precipProb:h.precipitation_probability[i],wind:h.wind_speed_10m[i]});
   }
   return r;
 }
-function fcInsight(){
+function updateMemory(){
+  if(!S.weather)return;
+  const now=Date.now(),tr=pTrend();
+  if(S.memory.windDir!==null){
+    const dc=Math.abs(S.weather.wind_direction_10m-S.memory.windDir)>35;
+    const sc=Math.abs(S.weather.wind_speed_10m-S.memory.windSpeed)>=4;
+    if(dc||sc)S.memory.callbacks.push({type:'wind_shift',at:now});
+  }
+  if(S.memory.pressureTrend!==null&&S.memory.pressureTrend!==tr){
+    S.memory.callbacks.push({type:'pressure_'+tr,at:now});
+  }
+  if(S.memory.weatherCode!==null&&S.memory.weatherCode!==S.weather.weather_code){
+    S.memory.callbacks.push({type:'sky_shift',at:now});
+  }
+  if(S.memory.temp!==null&&Math.abs(S.weather.temperature_2m-S.memory.temp)>=5){
+    S.memory.callbacks.push({type:S.weather.temperature_2m>S.memory.temp?'temp_up':'temp_down',at:now});
+  }
+  S.memory.windDir=S.weather.wind_direction_10m;
+  S.memory.windSpeed=S.weather.wind_speed_10m;
+  S.memory.pressureTrend=tr;
+  S.memory.weatherCode=S.weather.weather_code;
+  S.memory.temp=S.weather.temperature_2m;
+  S.memory.callbacks=S.memory.callbacks.filter(c=>now-c.at<3*60*60*1000).slice(-8);
+}
+function pickMemoryLine(){
+  const recent=S.memory.callbacks.filter(c=>Date.now()-c.at>15*60*1000);
+  if(!recent.length)return null;
+  const cb=pick(recent);
+  const pool=MEMORY_LINES[cb.type]||[];
+  return pool.length?pick(pool):null;
+}
+
+// ── CONTENT SOURCES ──────────────────────────────────────────────────────────
+function fieldLine(){
+  if(!S.weather)return null;
+  const w=S.weather,p=pTrend();
+  const opts=[];
+  opts.push(`${w.temperature_2m.toFixed(0)}F · ${skyL(w.weather_code,w.cloud_cover)}.`);
+  if(w.wind_speed_10m>=1)opts.push(`Wind ${w.wind_speed_10m.toFixed(0)} mph ${compassDir(w.wind_direction_10m)}.`);
+  opts.push(`Pressure ${p}.`);
+  // Sky narrative
+  const code=w.weather_code;
+  if([0,1].includes(code))opts.push('Sky opened up.','Cleaner light.');
+  if([2,3].includes(code))opts.push('Flat sky.','Cloud cover doing the work.');
+  if([45,48].includes(code))opts.push('Fog in.','Harder to see the edges.');
+  if([61,63,65,80,81,82].includes(code))opts.push('Rain in.','Wet. Things pulled tighter.');
+  if([71,73,75,77].includes(code))opts.push('Snow.','Ground story changed.');
+  // Wind feel
+  if(w.wind_speed_10m<2)opts.push('Not much moving.');
+  if(w.wind_speed_10m>=2&&w.wind_speed_10m<8)opts.push('Leaves stirring a little.');
+  if(w.wind_speed_10m>=8&&w.wind_speed_10m<15)opts.push('Canopy moving.');
+  if(w.wind_speed_10m>=15)opts.push('Sustained canopy movement.');
+  return pick(shuffle(opts).filter(lineFits));
+}
+function behaviorLine(){
+  if(!S.weather)return null;
+  const w=S.weather,p=period(),tr=pTrend();
+  const opts=[];
+  if(tr==='falling')opts.push('Pressure dropped.','Falling pressure — usually shifts things.');
+  if(tr==='rising')opts.push('Pressure recovered some.');
+  if(tr==='stable')opts.push('Pressure held.');
   const fc=S.forecast||[];
-  if(!fc.length||!S.weather)return null;
-  const rain=fc.find(h=>h.precipProb>50);
-  if(rain){
-    const l=rain.code>=95?'Storm':rain.code>=61?'Rain':'Drizzle';
-    return`${l} looks more likely ${rain.hoursOut<=1?'soon':'later on'}.`;
+  if(fc.length){
+    const rain=fc.find(h=>h.precipProb>50);
+    if(rain)opts.push(`Rain signal ${rain.hoursOut<=1?'soon':'later'}.`);
+    const later=fc[Math.min(fc.length-1,3)];
+    if(later){
+      const drop=w.temperature_2m-later.temp;
+      if(drop>8)opts.push(`Drops about ${drop.toFixed(0)}° later.`);
+      if(drop<-8)opts.push(`Warms ${Math.abs(drop).toFixed(0)}° later.`);
+      if(later.wind-w.wind_speed_10m>6)opts.push('Wind loads later.');
+    }
   }
-  const later=fc[Math.min(fc.length-1,3)];
-  if(later){
-    const drop=S.weather.temperature_2m-later.temp;
-    if(drop>8)return`Air drops about ${drop.toFixed(0)}° later.`;
-    if(drop<-8)return`Warms up about ${Math.abs(drop).toFixed(0)}° later.`;
-    if(later.wind-S.weather.wind_speed_10m>6)return'Wind builds later.';
+  if(w.wind_speed_10m<4)opts.push('Low wind. Easier to read.');
+  if(w.wind_speed_10m>12)opts.push('Wind like this hides more than it shows.');
+  if(w.temperature_2m<=33)opts.push('Cold air carries sound farther.');
+  if([61,63,65,80,81,82].includes(w.weather_code))opts.push('Rain pulls things tighter to cover.');
+  if(p==='dawn'||p==='dusk')opts.push('Good window.');
+  if(p==='midday')opts.push('Midday flattens things out.');
+  if(p==='night')opts.push('Different rules after dark.');
+  const valid=opts.filter(lineFits);
+  return valid.length?pick(shuffle(valid)):null;
+}
+function contextLine(){
+  const pool=[...REGIONAL,...phenNow().map(p=>p.n)].filter(lineFits);
+  return pool.length?pick(shuffle(pool)):null;
+}
+function lifestyleLine(){
+  const pool=(LIFESTYLE[season()]||[]).filter(lineFits);
+  return pool.length?pick(shuffle(pool)):null;
+}
+function groqLine(){
+  const pool=normalizeElderLines(S.elderPool).map(x=>x.text).filter(lineFits);
+  if(!pool.length)return null;
+  // Pick from pool, try up to 5 before giving up
+  const shuffled=shuffle(pool);
+  for(const t of shuffled.slice(0,5)){
+    if(!isTooRepetitive(t))return t;
   }
-  return null;
+  return shuffled[0]||null; // fallback to first even if repetitive
 }
-function airLabel(aqi){
-  if(aqi==null||Number.isNaN(aqi))return null;
-  if(aqi<=50)return'Air quality clear';
-  if(aqi<=100)return'Air quality moderate';
-  if(aqi<=150)return'Air quality rough for sensitive groups';
-  return'Air quality degraded';
+function fragmentLine(){
+  return pick(FRAGMENTS);
 }
-function skyNarrative(){
-  if(!S.weather)return[];
-  const code=S.weather.weather_code;
-  if([0,1].includes(code))return['Sky opened up for now.','Light is cleaner with the clouds off it.'];
-  if([2,3].includes(code))return['Flat sky. Harder to read things under it.','Cloud cover is doing most of the mood work right now.'];
-  if([45,48].includes(code))return['Fog shortens the scene.','The air is hiding more than usual.'];
-  if([61,63,65,80,81,82].includes(code))return['Rain changes the pace fast.','Wet weather pushes things tighter to cover.'];
-  if([71,73,75,77].includes(code))return['Snow changes the ground story fast.','Fresh snow makes every track matter more.'];
-  return[];
+function fallbackLine(){
+  const pool=FALLBACK.filter(t=>!isTooRepetitive(t));
+  return pool.length?pick(shuffle(pool)):pick(FALLBACK);
 }
-function fieldObservationPool(){
-  const out=[];
-  if(S.weather){
-    out.push(`Sitting at ${S.weather.temperature_2m.toFixed(0)}° with ${skyL(S.weather.weather_code,S.weather.cloud_cover).toLowerCase()} overhead.`);
-    out.push(`Wind ${S.weather.wind_speed_10m.toFixed(0)} mph ${compassDir(S.weather.wind_direction_10m)}.`);
-    out.push(`Pressure ${pTrend()} at ${(S.weather.pressure_msl*0.02953).toFixed(2)} inHg.`);
-    if(S.weather.wind_speed_10m<4)out.push('Not much on the ground. Tops are doing more.');
-    if(S.weather.wind_speed_10m>=4&&S.weather.wind_speed_10m<10)out.push('Leaves are moving enough to hide small shifts.');
-    if(S.weather.wind_speed_10m>=10)out.push('Canopy is busy enough to cover a lot.');
+function curiosityLine(){
+  const minGap=(3+r()*3)*60*1000;
+  if(Date.now()-S.lastCuriosity<minGap)return null;
+  const pool=CURIOSITY.filter(t=>!isTooRepetitive(t));
+  return pool.length?pick(shuffle(pool)):null;
+}
+function proximityLine(){
+  // Shares the lastCuriosity timer — won't fire back-to-back with curiosity
+  const minGap=(4+r()*3)*60*1000;
+  if(Date.now()-S.lastCuriosity<minGap)return null;
+  const pool=PROXIMITY.filter(t=>!isTooRepetitive(t));
+  return pool.length?pick(shuffle(pool)):pick(PROXIMITY);
+}
+
+// ── STREAM ENGINE ────────────────────────────────────────────────────────────
+// Weighted mode selection — no fixed order
+const MODE_WEIGHTS={
+  groq:50,        // Groq is dominant
+  field:20,       // real conditions
+  behavior:15,    // insight when warranted
+  context:8,      // regional grounding
+  lifestyle:5,    // subtle trigger
+  fragment:10,    // thought decay — short lines
+  memory:8,       // subtle callbacks
+  curiosity:4,    // time-gated — fires every 3–6 min
+  proximity:5     // lake/location grounding
+};
+
+function pickMode(){
+  // Build weighted pool
+  const pool=[];
+  Object.entries(MODE_WEIGHTS).forEach(([k,v])=>{for(let i=0;i<v;i++)pool.push(k);});
+  // Prevent 3x same mode in a row
+  let mode=pick(pool),tries=0;
+  const last3=S.streamModes.slice(-2);
+  while(last3.length>=2&&last3.every(m=>m===mode)&&tries<20){
+    mode=pick(pool);tries++;
   }
-  out.push(...skyNarrative());
-  out.push(...(TIME_LOCAL_LINES[period()]||[]));
-  return out;
+  return mode;
 }
-function behaviorInsightPool(){
-  const out=[pressureMeaning()];
-  const fci=fcInsight();
-  if(fci)out.push(fci);
-  out.push(...memoryCallbackPool());
-  if(S.weather&&S.weather.wind_speed_10m<6)out.push('Lower wind usually makes things easier to read.');
-  if(S.weather&&S.weather.wind_speed_10m>12)out.push('Wind like this hides more than it shows.');
-  if(period()==='dawn'||period()==='dusk')out.push('This light window usually does more with less.');
-  if(period()==='midday')out.push('Midday usually flattens things unless weather shifts.');
-  return out;
-}
-function northernContextPool(){
-  return[...REGIONAL_CONTEXT,...shuffle(DESTINATION_LINES).slice(0,4),...phenNow().map(p=>p.n)];
-}
-function lifestylePool(){
-  return[
-    ...(LIFESTYLE_LINES[season()]||[]),
-    'Up here, being in the right spot saves more time than people expect.',
-    'Close towns matter more here than people think.',
-    'Some days the lake carries the plan. Some days the woods do.',
-    'Could sit here a while.'
-  ];
-}
-function quietNarrativePool(){
-  const elder=normalizeElderLines(S.elderPool).map(x=>x.text).filter(lineFitsCurrentContext);
-  // AI lines are the primary source — only mix in fallback seasonals if pool is thin
-  if(elder.length>=3)return elder;
-  const seasonals=(FIELD_JOURNAL_LINES[period()]||[]).concat(FIELD_JOURNAL_LINES.all||[]);
-  const lessons=Math.random()<0.35?lessonPool():[];
-  return elder.concat(seasonals,lessons);
-}
-function extraDataItems(){
-  const items=[];
-  const moon=SunCalc.getMoonIllumination(new Date());
-  items.push({t:`${moonName(moon.phase)} · ${(moon.fraction*100).toFixed(0)}% illuminated.`,type:'astro'});
-  if(S.air&&S.air.us_aqi!=null)items.push({t:`AQI ${Math.round(S.air.us_aqi)} · ${airLabel(Math.round(S.air.us_aqi))}.`,type:'air'});
-  if(S.weather)items.push({t:`Wind feel · ${windL(S.weather.wind_speed_10m)}.`,type:'windfeel'});
-  return items;
-}
-function candidateFromMode(mode){
-  let pool=[];
-  if(mode==='field_observation')pool=fieldObservationPool();
-  if(mode==='behavior_insight'){const bp=behaviorInsightPool();if(!bp||!bp.length)return null;pool=bp;}
-  if(mode==='northern_context')pool=northernContextPool();
-  if(mode==='lifestyle_trigger')pool=lifestylePool();
-  if(mode==='quiet_narrative')pool=quietNarrativePool();
-  if(!pool||!pool.length)return null;
-  pool=shuffle(pool).filter(lineFitsCurrentContext);
-  for(const raw of pool){
-    const t=dialNarrator(raw);
-    if(!looksRepetitive(t,mode))return{t,mode,dim:mode==='quiet_narrative',live:mode==='field_observation'||mode==='northern_context'};
-  }
-  const fallback=pool.find(Boolean);
-  return fallback?{t:dialNarrator(fallback),mode,dim:mode==='quiet_narrative',live:mode==='field_observation'||mode==='northern_context'}:null;
-}
-function buildMarquee(){
-  const deduped=[];
-  function add(item){
-    if(!item||!item.t||!item.t.trim())return;
-    const prev=deduped[deduped.length-1];
-    if(prev&&lineSimilarity(prev.t,item.t)>0.44)return;
-    deduped.push(item);
-    rememberLine(item);
+
+function generateNextLine(){
+  // 10% silence
+  if(r()<0.10)return null;
+
+  const mode=pickMode();
+  let text=null;
+
+  // Try Groq first for most modes — 75% chance when pool available
+  const tryGroqFirst=['groq','behavior','field','context','lifestyle','memory'];
+  if(tryGroqFirst.includes(mode)&&S.elderPool.length>0&&r()<0.75){
+    text=groqLine();
   }
 
-  // ── POOL A: Groq lines (primary voice, accumulated across calls)
-  const groqLines=normalizeElderLines(S.elderPool)
-    .map(x=>x.text)
-    .filter(lineFitsCurrentContext);
-
-  // ── POOL B: Field observation — real conditions only, varied forms
-  const fieldLines=[];
-  if(S.weather){
-    const w=S.weather;
-    fieldLines.push({t:`${w.temperature_2m.toFixed(0)}F · ${skyL(w.weather_code,w.cloud_cover)}.`,type:'field',live:true});
-    if(w.wind_speed_10m>=1)fieldLines.push({t:`Wind ${w.wind_speed_10m.toFixed(0)} mph ${compassDir(w.wind_direction_10m)}.`,type:'field'});
-    fieldLines.push({t:`Pressure ${pTrend()} at ${(w.pressure_msl*0.02953).toFixed(2)} inHg.`,type:'field'});
-    const sn=skyNarrative();sn.forEach(t=>fieldLines.push({t,type:'field'}));
+  // Mode-specific fallback
+  if(!text){
+    if(mode==='field')text=fieldLine();
+    else if(mode==='behavior')text=behaviorLine();
+    else if(mode==='context')text=contextLine();
+    else if(mode==='lifestyle')text=lifestyleLine();
+    else if(mode==='fragment')text=fragmentLine();
+    else if(mode==='memory'){text=pickMemoryLine();if(!text)text=groqLine()||fallbackLine();}
+    else if(mode==='curiosity'){text=curiosityLine();if(!text)return null;}
+    else if(mode==='proximity'){text=proximityLine();if(!text)return null;}
+    else if(mode==='groq')text=groqLine()||fallbackLine();
+    else text=fallbackLine();
   }
 
-  // ── POOL C: Behavior insight — condition-gated
-  const behaviorLines=[];
-  const bp=behaviorInsightPool();
-  if(bp&&bp.length)bp.forEach(t=>behaviorLines.push({t:dialNarrator(t),type:'behavior'}));
+  if(!text)return null;
 
-  // ── POOL D: Context — regional + phenology
-  const contextLines=[];
-  shuffle([...REGIONAL_CONTEXT,...DESTINATION_LINES]).slice(0,3).forEach(t=>contextLines.push({t:dialNarrator(t),type:'context'}));
-  phenNow().forEach(p=>contextLines.push({t:p.n,type:'phenology',live:true}));
-
-  // ── POOL E: Lifestyle — season-appropriate
-  const lifestyleLines=[];
-  shuffle(LIFESTYLE_LINES[season()]||[]).slice(0,2).forEach(t=>lifestyleLines.push({t:dialNarrator(t),type:'lifestyle'}));
-
-  // ── POOL F: Data anchors — moon, AQI
-  const moon=SunCalc.getMoonIllumination(new Date());
-  const dataLines=[{t:`${moonName(moon.phase)} · ${(moon.fraction*100).toFixed(0)}% illuminated.`,type:'astro'}];
-  if(S.air&&S.air.us_aqi!=null)dataLines.push({t:`AQI ${Math.round(S.air.us_aqi)} · ${airLabel(Math.round(S.air.us_aqi))}.`,type:'air'});
-
-  // ── POOL G: Lesson — only when condition warrants
-  const lessonLines=[];
-  lessonPool().slice(0,1).forEach(t=>lessonLines.push({t,type:'lesson'}));
-
-  // ── POOL H: Field journal fallback — only if Groq pool thin
-  const journalLines=[];
-  if(groqLines.length<6){
-    (FIELD_JOURNAL_LINES[period()]||[]).forEach(t=>journalLines.push({t,type:'journal',dim:true}));
-    (FIELD_JOURNAL_LINES.all||[]).forEach(t=>journalLines.push({t,type:'journal',dim:true}));
+  // Thought-decay: 20% chance of fragment regardless of mode (except field/curiosity/proximity)
+  if(r()<0.20&&mode!=='field'&&mode!=='curiosity'&&mode!=='proximity'){
+    text=fragmentLine();
   }
 
-  // ── ASSEMBLE: interleave Groq with support, targeting 20+ items
-  // Order: field → groq × 2 → behavior → groq × 2 → context → groq × 2 → lifestyle → groq × 2 → data → groq × 2 → lesson/journal
-  const groqShuffled=shuffle(groqLines);
-  let gi=0;
-  const nextGroq=(n=2)=>{
-    const out=[];
-    for(let i=0;i<n&&gi<groqShuffled.length;i++,gi++)
-      out.push({t:groqShuffled[gi],type:'elder',dim:true});
-    return out;
-  };
+  const cleaned=dialNarrator(text);
+  if(!cleaned)return null;
+  if(!lineFits(cleaned))return null;
+  if(mode!=='fragment'&&isTooRepetitive(cleaned))return null;
 
-  // Weather leads ~60% of the time
-  const weatherFirst=Math.random()<0.6;
-  if(weatherFirst&&fieldLines.length)add(fieldLines[0]); // temp+sky line first
-  nextGroq(2).forEach(add);
-  shuffle(behaviorLines).slice(0,1).forEach(add);
-  nextGroq(2).forEach(add);
-  shuffle(contextLines).slice(0,2).forEach(add);
-  nextGroq(2).forEach(add);
-  shuffle(lifestyleLines).slice(0,1).forEach(add);
-  nextGroq(2).forEach(add);
-  shuffle(dataLines).slice(0,1).forEach(add);
-  nextGroq(2).forEach(add);
-  // remaining field lines (wind, pressure, sky)
-  fieldLines.slice(weatherFirst?1:0).forEach(add);
-  nextGroq(99).forEach(add); // drain remaining Groq
-  lessonLines.forEach(add);
-  journalLines.forEach(add);
-  if(!weatherFirst&&fieldLines.length)add(fieldLines[0]); // weather anchors mid if not first
+  if(mode==='curiosity'||mode==='proximity')S.lastCuriosity=Date.now();
+
+  return {t:cleaned, mode, dim:mode==='groq'||mode==='fragment'||mode==='memory'||mode==='curiosity', live:mode==='field'};
+}
+
+// ── STREAM RENDER ────────────────────────────────────────────────────────────
+// Generate stream on demand — target 28 items, stop at 40
+function buildStream(){
+  const newStream=[];
+  const tempOpeners=[];
+  const DATA_MODES=new Set(['field','behavior']);
+
+  for(let attempts=0;attempts<140&&newStream.length<28;attempts++){
+    const item=generateNextLine();
+    if(!item)continue;
+
+    // No more than 2 data-driven lines in a row
+    const lastTwo=newStream.slice(-2);
+    if(DATA_MODES.has(item.mode)&&lastTwo.length===2&&lastTwo.every(i=>DATA_MODES.has(i.mode)))continue;
+
+    // Adjacency similarity check
+    const prev=newStream[newStream.length-1];
+    if(prev&&lineSimilarity(prev.t,item.t)>0.44)continue;
+
+    // Opener collision within this build
+    const op=opener2(item.t);
+    if(tempOpeners.slice(-10).includes(op))continue;
+
+    newStream.push(item);
+    tempOpeners.push(op);
+  }
+  return newStream;
+}
+
+function renderStream(){
+  const items=buildStream();
+  if(!items.length)return;
+
+  // Record to history
+  items.forEach(i=>{
+    S.lineHistory.push(i.t);
+    if(S.lineHistory.length>120)S.lineHistory.shift();
+    S.streamOpeners.push(opener2(i.t));
+    if(S.streamOpeners.length>40)S.streamOpeners.shift();
+    S.streamModes.push(i.mode);
+    if(S.streamModes.length>20)S.streamModes.shift();
+  });
 
   const track=document.getElementById('bar-track');
   if(!track)return;
-  const html=deduped.map(i=>`<span class="bar-item${i.live?' live':i.dim?' dim':''}">${i.t}</span><span class="bar-sep"> · </span>`).join('');
-  track.innerHTML=html+html; // standard 2x for seamless CSS loop
+  const html=items.map(i=>`<span class="bar-item${i.live?' live':i.dim?' dim':''}">${i.t}</span><span class="bar-sep"> · </span>`).join('');
+  track.innerHTML=html+html; // 2x for seamless CSS loop
 
   requestAnimationFrame(()=>{
     const passW=track.scrollWidth/2;
-    const speed=60; // px/sec — slow enough that lines land before cycling
+    const speed=90; // px/sec
     track.style.animationDuration=`${Math.max(120,passW/speed)}s`;
   });
 }
+
+// ── GROQ HYDRATION ───────────────────────────────────────────────────────────
+async function hydrateElder(){
+  if(!S.weather)return;
+  try{
+    const ctx={
+      location:'Higgins Lake, Roscommon County, Michigan',
+      period:period(), season:season(),
+      weather:{
+        temp_f:S.weather.temperature_2m,
+        wind_mph:S.weather.wind_speed_10m,
+        wind_dir:compassDir(S.weather.wind_direction_10m),
+        sky:skyL(S.weather.weather_code,S.weather.cloud_cover),
+        pressure_trend:pTrend()
+      },
+      forecast:(S.forecast||[]).slice(0,3),
+      phenology:phenNow().map(p=>p.n).slice(0,2),
+      recent_lines:S.lineHistory.slice(-30),
+      memory_callbacks:S.memory.callbacks.slice(-4).map(c=>c.type)
+    };
+    const res=await fetch(ELDER_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ctx)});
+    if(!res.ok)throw new Error(res.status);
+    const data=await res.json();
+    if(Array.isArray(data.lines)&&data.lines.length){
+      const incoming=normalizeElderLines(data.lines);
+      const existing=S.elderPool.filter(e=>!incoming.some(n=>n.text===e.text));
+      S.elderPool=[...incoming,...existing].slice(0,40);
+      renderStream(); // rebuild with fresh lines
+    }
+  }catch(e){console.warn('elder',e);}
+}
+
+// ── WEATHER ──────────────────────────────────────────────────────────────────
+async function updateWeather(){
+  try{
+    const [wr,aqr]=await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,wind_speed_10m,wind_direction_10m,pressure_msl,cloud_cover,weather_code&hourly=temperature_2m,weather_code,precipitation_probability,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FDetroit&forecast_days=1`),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=us_aqi,pm10,pm2_5,ozone&timezone=America%2FDetroit`)
+    ]);
+    const d=await wr.json(),c=d.current;
+    S.weather=c;
+    S.pressureTrend.push({t:Date.now(),p:c.pressure_msl});
+    if(S.pressureTrend.length>8)S.pressureTrend.shift();
+    S.forecast=parseFc(d.hourly);
+    try{const aq=await aqr.json();if(aq&&aq.current)S.air=aq.current;}catch(e){}
+    updateMemory();
+    renderStream();
+  }catch(e){console.warn('weather',e);}
+}
+async function updateNOAA(){
+  try{
+    const res=await fetch(`https://api.weather.gov/alerts/active?zone=${NOAA_ZONE}`,{headers:{'Accept':'application/geo+json','User-Agent':'backyard-overlay/9'}});
+    const d=await res.json();
+    const a=(d.features||[]).filter(f=>['Warning','Watch','Advisory'].some(t=>f.properties.event.includes(t)));
+    const bar=document.getElementById('noaa-bar');
+    if(a.length){document.getElementById('noaa-text').textContent=a[0].properties.event.toUpperCase();bar.classList.add('active');}
+    else bar.classList.remove('active');
+  }catch(e){}
+}
+
+// ── CLOCK / WOI / MILESTONES ─────────────────────────────────────────────────
 function updateClock(){
   const now=new Date(),h=now.getHours(),disp=h%12||12,ampm=h>=12?'PM':'AM';
   document.getElementById('clock').textContent=`${disp}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${ampm}`;
   const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   document.getElementById('bar-date').textContent=`${M[now.getMonth()]} ${now.getDate()}`;
   checkMilestones(now);
-  updateWOI(now);
 }
 function checkMilestones(now){
   const el=Math.floor((now-S.sessionStart)/60000);
@@ -813,87 +762,12 @@ function updateWOI(now){
   }
   if(h>=5&&h<8&&msr<10){set('Peak Window','Dawn — active','Most active period of the morning','');return;}
   if(h>=17&&h<20&&mss>-30&&mss<20){set('Peak Window','Dusk — active','Most active period of the day','');return;}
-  if(msr>0&&msr<40){const m=Math.floor(msr),s=Math.floor((msr-m)*60);set('Dawn Window','Light opening','Things usually change at first light',`${m}:${pad(s)}`);return;}
-  if(mss>0&&mss<50){const m=Math.floor(mss),s=Math.floor((mss-m)*60);set('Dusk Window','Last light coming','This window usually shortens fast',`${m}:${pad(s)}`);return;}
+  if(msr>0&&msr<40){const m=Math.floor(msr),s=Math.floor((msr-m)*60);set('Dawn Window','Light opening','Things change at first light',`${m}:${pad(s)}`);return;}
+  if(mss>0&&mss<50){const m=Math.floor(mss),s=Math.floor((mss-m)*60);set('Dusk Window','Last light coming','Window closes fast',`${m}:${pad(s)}`);return;}
   el.classList.remove('active');
 }
-async function updateWeather(){
-  try{
-    const [wr,aqr]=await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,wind_speed_10m,wind_direction_10m,pressure_msl,cloud_cover,weather_code&hourly=temperature_2m,weather_code,precipitation_probability,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FDetroit&forecast_days=1`),
-      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=us_aqi,pm10,pm2_5,ozone&timezone=America%2FDetroit`)
-    ]);
-    const d=await wr.json(),c=d.current;
-    S.weather=c;
-    S.pressureTrend.push({t:Date.now(),p:c.pressure_msl});
-    if(S.pressureTrend.length>8)S.pressureTrend.shift();
-    S.forecast=parseFc(d.hourly);
-    try{
-      const aq=await aqr.json();
-      if(aq&&aq.current)S.air=aq.current;
-    }catch(e){}
-    updateMemory();
-    buildMarquee();
-  }catch(e){
-    console.warn('weather',e);
-  }
-}
-async function updateNOAA(){
-  try{
-    const r=await fetch(`https://api.weather.gov/alerts/active?zone=${NOAA_ZONE}`,{
-      headers:{'Accept':'application/geo+json','User-Agent':'backyard-overlay/9'}
-    });
-    const d=await r.json();
-    const a=(d.features||[]).filter(f=>['Warning','Watch','Advisory'].some(t=>f.properties.event.includes(t)));
-    const bar=document.getElementById('noaa-bar');
-    if(a.length){
-      document.getElementById('noaa-text').textContent=a[0].properties.event.toUpperCase();
-      bar.classList.add('active');
-    }else{
-      bar.classList.remove('active');
-    }
-  }catch(e){}
-}
-async function hydrateElder(){
-  if(!S.weather)return;
-  try{
-    const ctx={
-      location:'Higgins Lake, Roscommon County, Michigan',
-      period:period(),
-      season:season(),
-      weather:{
-        temp_f:S.weather.temperature_2m,
-        wind_mph:S.weather.wind_speed_10m,
-        wind_dir:compassDir(S.weather.wind_direction_10m),
-        sky:skyL(S.weather.weather_code,S.weather.cloud_cover),
-        pressure_trend:pTrend()
-      },
-      forecast:(S.forecast||[]).slice(0,4),
-      phenology:phenNow().map(p=>p.n).slice(0,2),
-      recent_lines:S.lineHistory.slice(-40),
-      memory_callbacks:(S.memory.callbacks||[]).slice(-6).map(c=>c.text)
-    };
 
-    const r=await fetch(ELDER_ENDPOINT,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(ctx)
-    });
-
-    if(!r.ok)throw new Error(r.status);
-    const data=await r.json();
-    if(Array.isArray(data.lines)&&data.lines.length){
-      const incoming=normalizeElderLines(data.lines);
-      const existing=S.elderPool.filter(e=>!incoming.some(n=>n.text===e.text));
-      S.elderPool=[...incoming,...existing].slice(0,40);
-      buildMarquee();
-    }
-  }catch(e){
-    console.warn('elder fallback',e);
-  }
-}
-
-/* INIT */
+// ── INIT ─────────────────────────────────────────────────────────────────────
 scaleOverlay();
 window.addEventListener('resize',scaleOverlay);
 if(window.location.search.includes('debug'))document.body.classList.add('debug');
@@ -907,14 +781,11 @@ setInterval(updateWeather,6*60*1000);
 updateNOAA();
 setInterval(updateNOAA,15*60*1000);
 
-setTimeout(()=>{
-  hydrateElder();
-  setInterval(hydrateElder,2*60*1000);
-},10000);
+setTimeout(()=>{hydrateElder();setInterval(hydrateElder,2*60*1000);},10000);
 
-// Initial build + reshuffle every 90s so no fixed sequence completes a full loop
-buildMarquee();
-setInterval(buildMarquee,90*1000);
+// Re-render stream every 90s — new random order, new fragment placement
+renderStream();
+setInterval(renderStream,90*1000);
 </script>
 </body>
 </html>
