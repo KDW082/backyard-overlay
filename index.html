@@ -343,26 +343,38 @@ const LEFT_TURN=[
   'Kind of nice, actually.',
   'Easy day.'
 ];
-const REALITY_LINES=[
-  'Camera hasn\'t picked up anything in a bit.',
-  'Feed\'s been steady for a while.',
-  'Nothing crossed through frame recently.',
-  'Last movement was a while back.',
-  'Been quiet on camera.',
-  'Frame\'s been clear.',
-  'Nothing triggering the feed right now.',
-  'Still no crossings.',
-  'No movement picked up lately.',
-  'Nothing on this side of the frame.'
+const WILDLIFE_LINES=[
+  'Movement usually starts at the edges first.',
+  'Deer tend to hang just outside the open before stepping in.',
+  'Smaller birds usually give things away before you see anything bigger.',
+  'Most activity out here happens just off camera first.',
+  'You’ll usually hear or sense something before it shows itself.',
+  'Feeding patterns tend to come in short bursts, not steady flow.',
+  'Animals rarely move straight through — they pause, then commit.',
+  'Movement tends to follow the same paths once it starts.',
+  'Things usually circle once before stepping into the open.',
+  'You’re usually seeing the second part of the movement, not the start.'
 ];
 
-// Ultra-plain lines — realism spikes, bypass most filters
-const ULTRA_PLAIN=[
-  'Still nothing.',
-  'Not seeing anything.',
-  'All quiet.',
-  'Nothing yet.',
-  'Still quiet.'
+const HISTORY_LINES=[
+  'Higgins Lake is one of the clearest lakes in Michigan.',
+  'This area used to be heavy logging territory in the early 1900s.',
+  'Roscommon County was built around timber and rail movement.',
+  'A lot of these forest lines were shaped by old logging routes.',
+  'Wildlife patterns here still follow some of those old clearings.',
+  'This region sits right between major north-south wildlife corridors.',
+  'The forest density here creates natural cover most of the day.',
+  'Water proximity changes movement patterns more than people expect.'
+];
+
+const ACTIVITY_LINES=[
+  'Most people out here split the day between water and woods.',
+  'Mornings usually start at the lake, evenings shift back to the trees.',
+  'Fishing tends to pick up when the light drops off.',
+  'Kayak water is usually best when the wind lays down.',
+  'Trail activity usually picks up before sunset.',
+  'Fire pits come out as soon as the temperature dips.',
+  'This area stays quiet even when nearby towns get busy.'
 ];
 function pad(n){return String(n).padStart(2,'0');}
 function shuffle(arr){return [...arr].sort(()=>Math.random()-0.5);}
@@ -774,14 +786,17 @@ function leftTurnLine(){
   const pool=LEFT_TURN.filter(t=>!isTooRepetitive(t));
   return pool.length?pick(shuffle(pool)):pick(LEFT_TURN);
 }
-function realityLine(){
-  const pool=REALITY_LINES.filter(t=>!isTooRepetitive(t));
-  return pool.length?pick(shuffle(pool)):pick(REALITY_LINES);
+function wildlifeLine(){
+  const pool=WILDLIFE_LINES.filter(t=>!isTooRepetitive(t));
+  return pool.length?pick(shuffle(pool)):pick(WILDLIFE_LINES);
 }
-function ultraPlainLine(){
-  // Only blocked if identical line appeared in last 10
-  const pool=ULTRA_PLAIN.filter(t=>!S.lineHistory.slice(-10).includes(t));
-  return pool.length?pick(shuffle(pool)):pick(ULTRA_PLAIN);
+function historyLine(){
+  const pool=HISTORY_LINES.filter(t=>lineFits(t)&&!isTooRepetitive(t));
+  return pool.length?pick(shuffle(pool)):pick(HISTORY_LINES);
+}
+function activityLine(){
+  const pool=ACTIVITY_LINES.filter(t=>lineFits(t)&&!isTooRepetitive(t));
+  return pool.length?pick(shuffle(pool)):pick(ACTIVITY_LINES);
 }
 
 // ── STREAM ENGINE ────────────────────────────────────────────────────────────
@@ -790,8 +805,8 @@ const MODE_WEIGHTS={
   groq:38,          // AI assisting, not leading
   field:8,          // real conditions — restrained
   behavior:6,       // insight when warranted
-  context:5,        // regional grounding
-  lifestyle:4,      // subtle
+  context:10,       // regional grounding
+  lifestyle:8,      // subtle selling of the area
   fragment:14,      // thought decay
   memory:5,         // subtle callbacks
   curiosity:4,      // time-gated
@@ -801,8 +816,9 @@ const MODE_WEIGHTS={
   non_sequitur:12,  // breaks pattern
   neutral:10,       // flat reset lines
   left_turn:10,     // off-topic human moment
-  reality:8,        // literal camera grounding
-  ultra_plain:4     // realism spikes — bypass most filters
+  wildlife:18,      // wildlife knowledge and framing
+  history:8,        // area history
+  activity:8        // area activities
 };
 
 function pickMode(){
@@ -829,8 +845,9 @@ function generateNextLine(){
   const uncertainCount=last12.filter(l=>uncertainPat.test(l.toLowerCase())).length;
   const changeCount=last12.filter(l=>changePat.test(l.toLowerCase())).length;
   if(uncertainCount>=3||changeCount>=3){
-    const t=r()<0.5?neutralLine():realityLine();
-    if(t){const cleaned=dialNarrator(t);if(cleaned&&lineFits(cleaned))return{t:cleaned,mode:r()<0.5?'neutral':'reality',dim:true,live:false};}
+    const modePick = r()<0.5 ? 'neutral' : 'wildlife';
+    const t = modePick==='neutral' ? neutralLine() : wildlifeLine();
+    if(t){const cleaned=dialNarrator(t);if(cleaned&&lineFits(cleaned))return{t:cleaned,mode:modePick,dim:true,live:false};}
   }
 
   const mode=pickMode();
@@ -853,8 +870,9 @@ function generateNextLine(){
     else if(mode==='non_sequitur')text=nonSequiturLine();
     else if(mode==='neutral')text=neutralLine();
     else if(mode==='left_turn')text=leftTurnLine();
-    else if(mode==='reality')text=realityLine();
-    else if(mode==='ultra_plain')text=ultraPlainLine();
+    else if(mode==='wildlife')text=wildlifeLine();
+    else if(mode==='history')text=historyLine();
+    else if(mode==='activity')text=activityLine();
     else if(mode==='groq')text=groqLine()||fallbackLine();
     else text=fallbackLine();
   }
@@ -863,7 +881,7 @@ function generateNextLine(){
 
   // Fragment injection: 6% — blocked if last 6 lines had 2+ fragments
   const recentFragments=S.streamModes.slice(-6).filter(m=>m==='fragment').length;
-  if(recentFragments<2&&r()<0.05&&mode!=='field'&&mode!=='curiosity'&&mode!=='proximity'&&mode!=='neutral'&&mode!=='left_turn'&&mode!=='reality'){
+  if(recentFragments<2&&r()<0.05&&mode!=='field'&&mode!=='curiosity'&&mode!=='proximity'&&mode!=='neutral'&&mode!=='left_turn'&&mode!=='wildlife'&&mode!=='history'&&mode!=='activity'){
     text=fragmentLine();
   }
 
@@ -878,7 +896,7 @@ function generateNextLine(){
   if(/\b(this (tells|means|shows) you|you can see that|this is why|that's why|which means)\b/.test(lc))return null;
   if(/\b(this tends to|when x happens|this is what happens)\b/.test(lc))return null;
 
-  if(mode!=='fragment'&&mode!=='neutral'&&mode!=='left_turn'&&mode!=='reality'&&mode!=='ultra_plain'&&isTooRepetitive(cleaned))return null;
+  if(mode!=='fragment'&&mode!=='neutral'&&mode!=='left_turn'&&mode!=='wildlife'&&mode!=='history'&&mode!=='activity'&&isTooRepetitive(cleaned))return null;
 
   if(mode==='curiosity'||mode==='proximity')S.lastCuriosity=Date.now();
 
