@@ -685,39 +685,99 @@ function candidateFromMode(mode){
   return fallback?{t:dialNarrator(fallback),mode,dim:mode==='quiet_narrative',live:mode==='field_observation'||mode==='northern_context'}:null;
 }
 function buildMarquee(){
-  const items=[];
-  const dataItems=extraDataItems();
-
-  if(S.weather){
-    items.push({t:`${S.weather.temperature_2m.toFixed(0)}F · ${skyL(S.weather.weather_code,S.weather.cloud_cover)}.`,type:'headline',live:true});
-    items.push({t:`Wind ${S.weather.wind_speed_10m<1?'calm':`${S.weather.wind_speed_10m.toFixed(0)} mph ${compassDir(S.weather.wind_direction_10m)}`}.`,type:'wind'});
-  }
-
-  shuffle(dataItems).slice(0,1).forEach(i=>items.push(i));
-  modeOrder(6).forEach(mode=>{
-    const cand=candidateFromMode(mode);
-    if(cand)items.push(cand);
-  });
-
   const deduped=[];
-  for(const item of items){
-    if(!item||!item.t)continue;
+  function add(item){
+    if(!item||!item.t||!item.t.trim())return;
     const prev=deduped[deduped.length-1];
-    if(prev&&lineSimilarity(prev.t,item.t)>0.44)continue;
+    if(prev&&lineSimilarity(prev.t,item.t)>0.44)return;
     deduped.push(item);
     rememberLine(item);
   }
 
+  // ── POOL A: Groq lines (primary voice, accumulated across calls)
+  const groqLines=normalizeElderLines(S.elderPool)
+    .map(x=>x.text)
+    .filter(lineFitsCurrentContext);
+
+  // ── POOL B: Field observation — real conditions only, varied forms
+  const fieldLines=[];
+  if(S.weather){
+    const w=S.weather;
+    fieldLines.push({t:`${w.temperature_2m.toFixed(0)}F · ${skyL(w.weather_code,w.cloud_cover)}.`,type:'field',live:true});
+    if(w.wind_speed_10m>=1)fieldLines.push({t:`Wind ${w.wind_speed_10m.toFixed(0)} mph ${compassDir(w.wind_direction_10m)}.`,type:'field'});
+    fieldLines.push({t:`Pressure ${pTrend()} at ${(w.pressure_msl*0.02953).toFixed(2)} inHg.`,type:'field'});
+    const sn=skyNarrative();sn.forEach(t=>fieldLines.push({t,type:'field'}));
+  }
+
+  // ── POOL C: Behavior insight — condition-gated
+  const behaviorLines=[];
+  const bp=behaviorInsightPool();
+  if(bp&&bp.length)bp.forEach(t=>behaviorLines.push({t:dialNarrator(t),type:'behavior'}));
+
+  // ── POOL D: Context — regional + phenology
+  const contextLines=[];
+  shuffle([...REGIONAL_CONTEXT,...DESTINATION_LINES]).slice(0,3).forEach(t=>contextLines.push({t:dialNarrator(t),type:'context'}));
+  phenNow().forEach(p=>contextLines.push({t:p.n,type:'phenology',live:true}));
+
+  // ── POOL E: Lifestyle — season-appropriate
+  const lifestyleLines=[];
+  shuffle(LIFESTYLE_LINES[season()]||[]).slice(0,2).forEach(t=>lifestyleLines.push({t:dialNarrator(t),type:'lifestyle'}));
+
+  // ── POOL F: Data anchors — moon, AQI
+  const moon=SunCalc.getMoonIllumination(new Date());
+  const dataLines=[{t:`${moonName(moon.phase)} · ${(moon.fraction*100).toFixed(0)}% illuminated.`,type:'astro'}];
+  if(S.air&&S.air.us_aqi!=null)dataLines.push({t:`AQI ${Math.round(S.air.us_aqi)} · ${airLabel(Math.round(S.air.us_aqi))}.`,type:'air'});
+
+  // ── POOL G: Lesson — only when condition warrants
+  const lessonLines=[];
+  lessonPool().slice(0,1).forEach(t=>lessonLines.push({t,type:'lesson'}));
+
+  // ── POOL H: Field journal fallback — only if Groq pool thin
+  const journalLines=[];
+  if(groqLines.length<6){
+    (FIELD_JOURNAL_LINES[period()]||[]).forEach(t=>journalLines.push({t,type:'journal',dim:true}));
+    (FIELD_JOURNAL_LINES.all||[]).forEach(t=>journalLines.push({t,type:'journal',dim:true}));
+  }
+
+  // ── ASSEMBLE: interleave Groq with support, targeting 20+ items
+  // Order: field → groq × 2 → behavior → groq × 2 → context → groq × 2 → lifestyle → groq × 2 → data → groq × 2 → lesson/journal
+  const groqShuffled=shuffle(groqLines);
+  let gi=0;
+  const nextGroq=(n=2)=>{
+    const out=[];
+    for(let i=0;i<n&&gi<groqShuffled.length;i++,gi++)
+      out.push({t:groqShuffled[gi],type:'elder',dim:true});
+    return out;
+  };
+
+  // Weather leads ~60% of the time
+  const weatherFirst=Math.random()<0.6;
+  if(weatherFirst&&fieldLines.length)add(fieldLines[0]); // temp+sky line first
+  nextGroq(2).forEach(add);
+  shuffle(behaviorLines).slice(0,1).forEach(add);
+  nextGroq(2).forEach(add);
+  shuffle(contextLines).slice(0,2).forEach(add);
+  nextGroq(2).forEach(add);
+  shuffle(lifestyleLines).slice(0,1).forEach(add);
+  nextGroq(2).forEach(add);
+  shuffle(dataLines).slice(0,1).forEach(add);
+  nextGroq(2).forEach(add);
+  // remaining field lines (wind, pressure, sky)
+  fieldLines.slice(weatherFirst?1:0).forEach(add);
+  nextGroq(99).forEach(add); // drain remaining Groq
+  lessonLines.forEach(add);
+  journalLines.forEach(add);
+  if(!weatherFirst&&fieldLines.length)add(fieldLines[0]); // weather anchors mid if not first
+
   const track=document.getElementById('bar-track');
   if(!track)return;
   const html=deduped.map(i=>`<span class="bar-item${i.live?' live':i.dim?' dim':''}">${i.t}</span><span class="bar-sep"> · </span>`).join('');
-  track.innerHTML=html+html;
+  track.innerHTML=html+html; // standard 2x for seamless CSS loop
 
   requestAnimationFrame(()=>{
-    const fullW=track.scrollWidth/2;
-    const speed=120;
-    const dur=fullW/speed;
-    track.style.animationDuration=`${dur}s`;
+    const passW=track.scrollWidth/2;
+    const speed=60; // px/sec — slow enough that lines land before cycling
+    track.style.animationDuration=`${Math.max(120,passW/speed)}s`;
   });
 }
 function updateClock(){
@@ -823,7 +883,9 @@ async function hydrateElder(){
     if(!r.ok)throw new Error(r.status);
     const data=await r.json();
     if(Array.isArray(data.lines)&&data.lines.length){
-      S.elderPool=normalizeElderLines(data.lines);
+      const incoming=normalizeElderLines(data.lines);
+      const existing=S.elderPool.filter(e=>!incoming.some(n=>n.text===e.text));
+      S.elderPool=[...incoming,...existing].slice(0,40);
       buildMarquee();
     }
   }catch(e){
@@ -850,7 +912,9 @@ setTimeout(()=>{
   setInterval(hydrateElder,2*60*1000);
 },10000);
 
+// Initial build + reshuffle every 90s so no fixed sequence completes a full loop
 buildMarquee();
+setInterval(buildMarquee,90*1000);
 </script>
 </body>
 </html>
