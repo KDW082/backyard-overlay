@@ -145,6 +145,7 @@ const S = {
   streamModes:[],     // last 10 modes — prevents 3x same mode
   lineHistory:[],     // last 120 displayed lines for Groq context
   lastCuriosity:0,    // timestamp of last curiosity/proximity injection
+  lastPacingThrottle:0, // timestamp of last pacing slow period
   memory:{windDir:null,windSpeed:null,pressureTrend:null,weatherCode:null,temp:null,callbacks:[]}
 };
 
@@ -218,12 +219,10 @@ const FALLBACK=[
   'Feels quieter than it should for this time of day.',
   'Something\'s a little off from earlier.',
   'Not giving much away right now.',
-  'Looks like it might change later.',
   'Air feels different than it did.',
   'Nothing obvious happening at the moment.',
   'Hard to read right now.',
   'Same as it\'s been for a while.',
-  'Worth keeping an eye on.',
   'Bit unsettled still.',
   'Not much to report.',
   'Place is just doing its thing.'
@@ -306,13 +305,65 @@ const NON_SEQUITUR=[
   'If you were out here, you\'d notice it.',
   'Longer you watch, the more it makes sense.',
   'Doesn\'t show itself right away.',
-  'Wouldn\'t be surprised if something changes.',
-  'Might not stay like this.',
-  'Could go either way from here.',
   'Takes a bit to read a place like this.'
 ];
 
-// ── UTILITY ──────────────────────────────────────────────────────────────────
+// Neutral lines — flat, non-interpretive, resets the brain
+const NEUTRAL_LINES=[
+  'Just sitting there right now.',
+  'Not doing much.',
+  'Same as before.',
+  'Still about the same.',
+  'Nothing really happening.',
+  'Holding steady.',
+  'Doesn\'t look any different.',
+  'About what you\'d expect.',
+  'Not much to say.',
+  'Pretty standard.',
+  'Nothing worth noting.',
+  'Looks normal.',
+  'No real change.',
+  'About the same as it was.'
+];
+
+// Left turn lines — breaks pattern, feels human, slightly off-topic
+const LEFT_TURN=[
+  'Lost track of time for a second.',
+  'Could be worse.',
+  'Not bad, honestly.',
+  'Kind of a quiet day.',
+  "Wouldn't complain about it.",
+  'Seen better, seen worse.',
+  'Just one of those days.',
+  "Doesn't feel rushed.",
+  'No pressure.',
+  'Could use some coffee.',
+  'Nothing wrong with it.',
+  'Honestly not bad.',
+  'Kind of nice, actually.',
+  'Easy day.'
+];
+const REALITY_LINES=[
+  'Camera hasn\'t picked up anything in a bit.',
+  'Feed\'s been steady for a while.',
+  'Nothing crossed through frame recently.',
+  'Last movement was a while back.',
+  'Been quiet on camera.',
+  'Frame\'s been clear.',
+  'Nothing triggering the feed right now.',
+  'Still no crossings.',
+  'No movement picked up lately.',
+  'Nothing on this side of the frame.'
+];
+
+// Ultra-plain lines — realism spikes, bypass most filters
+const ULTRA_PLAIN=[
+  'Still nothing.',
+  'Not seeing anything.',
+  'All quiet.',
+  'Nothing yet.',
+  'Still quiet.'
+];
 function pad(n){return String(n).padStart(2,'0');}
 function shuffle(arr){return [...arr].sort(()=>Math.random()-0.5);}
 function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
@@ -421,6 +472,17 @@ function dialNarrator(t){
   }
 
   if(out&&!/[.!?…]$/.test(out))out+='.';
+
+  // Micro-variation in punctuation — makes stream feel less formatted
+  const rv=r();
+  if(rv<0.10){
+    // No period — trailing thought
+    out=out.replace(/\.$/, '');
+  } else if(rv<0.15){
+    // Trailing pause marker
+    out=out.replace(/\.$/, '') + (r()<0.5?' …for now':' …right now');
+  }
+
   if(!out||out.length<4)return null;
   return out.charAt(0).toUpperCase()+out.slice(1);
 }
@@ -456,54 +518,96 @@ function isTooRepetitive(text){
   // Token overlap against last 25 lines (semantic similarity)
   if(S.lineHistory.slice(-25).some(prev=>lineSimilarity(prev,text)>0.38))return true;
 
+  // Soft repetition tolerance — allow reuse if it's not recent (older than last 20)
+  if(S.lineHistory.length>20){
+    const older=S.lineHistory.slice(-40,-20);
+    if(older.some(prev=>lineSimilarity(prev,text)>0.45))return false;
+  }
+
   // Structural similarity — same 3-word opener in last 8
   const open3=toks.slice(0,3).join(' ');
   if(open3.length>4&&S.lineHistory.slice(-8).some(prev=>tokenize(prev).slice(0,3).join(' ')===open3))return true;
 
   // Sentence-length shape — don't allow 3 lines of similar length in a row
   const shape=len<30?'short':len<65?'medium':'long';
-  const recentShapes=S.lineHistory.slice(-4).map(l=>{
-    const ll=l.trim().length;
-    return ll<30?'short':ll<65?'medium':'long';
-  });
+  const recentShapes=S.lineHistory.slice(-4).map(l=>{const ll=l.trim().length;return ll<30?'short':ll<65?'medium':'long';});
   if(recentShapes.length>=3&&recentShapes.slice(-3).every(s=>s===shape))return true;
 
-  // Topic balancing — strict caps within last 10 lines
-  const topics=[
-    {key:'wind',pat:/\bwind\b|\bwindy\b|\bgusts?\b|\bmph\b/},
-    {key:'pressure',pat:/\bpressure\b|\bbarometer\b/},
-    {key:'sky',pat:/\blight\b|\bsunlight\b|\bovercast\b|\bcloudy\b|\bsunny\b|\bsky\b|\bclouds\b/},
-    {key:'still',pat:/\bstill\b|\bquiet\b|\bsilent\b/},
-    {key:'lake',pat:/\blake\b|\bwater\b|\bhiggins\b/},
+  // ── CONCEPT ROTATION LOCK ─────────────────────────────────────────────────
+  // Each line maps to a concept tag. Reject if same concept appeared 3+ times in last 10.
+  const CONCEPT_MAP=[
+    {tag:'quiet',     pat:/\b(quiet|quieter|still|stillness|silent|calm|subdued)\b/},
+    {tag:'change',    pat:/\b(change|changed|different|shift|shifted|turn|turning|alter)\b/},
+    {tag:'uncertain', pat:/\b(hard to|might|could|maybe|not sure|wouldn't|can't tell|unclear)\b/},
+    {tag:'time',      pat:/\b(earlier|later|before|ago|morning|afternoon|evening|hour|day)\b/},
+    {tag:'weather',   pat:/\b(wind|pressure|sky|clouds|rain|snow|fog|temp|degrees|barometer|overcast|drizzle)\b/},
+    {tag:'location',  pat:/\b(lake|water|higgins|roscommon|grayling|woods|here|spot|area)\b/},
+    {tag:'lifestyle', pat:/\b(coffee|fire|sit|rush|morning|day off|outside|head out)\b/},
+    {tag:'memory',    pat:/\b(before|earlier|last|since|used to|back|was|ago|seen)\b/},
+    {tag:'observe',   pat:/\b(notice|watch|see|look|read|tell|pick up|figure)\b/},
+    {tag:'neutral',   pat:/\b(same|about|pretty|not much|nothing|okay|fine)\b/},
   ];
-  for(const topic of topics){
-    if(topic.pat.test(lc)){
-      const count=S.lineHistory.slice(-10).filter(l=>topic.pat.test(l.toLowerCase())).length;
+  for(const c of CONCEPT_MAP){
+    if(c.pat.test(lc)){
+      const count=S.lineHistory.slice(-10).filter(l=>c.pat.test(l.toLowerCase())).length;
+      if(count>=3)return true;
+    }
+  }
+
+  // ── "FEELS / SOMETHING / EARLIER" HARD LIMITER ───────────────────────────
+  // These words saturate fast — cap at 2 in last 8 lines
+  for(const word of['feels','something','earlier']){
+    if(lc.includes(word)){
+      const count=S.lineHistory.slice(-8).filter(l=>l.toLowerCase().includes(word)).length;
       if(count>=2)return true;
     }
   }
 
-  // Keyword saturation — any single word used 3x in last 6 lines
-  const keyWords=['wind','light','pressure','sky','usually','still','feels','lake','clouds'];
-  for(const kw of keyWords){
-    if(S.lineHistory.slice(-6).filter(l=>l.toLowerCase().includes(kw)).length>=3&&lc.includes(kw))return true;
+  // ── SAME-INTENT BLOCKING ──────────────────────────────────────────────────
+  // Groups of phrases that express the same idea — treat as duplicates
+  const INTENT_GROUPS=[
+    [/\b(might change|could change|might shift|could shift|could go either way|might not stay|could turn|might change later|could change later|might shift later|could shift later|wouldn't be surprised|would not be surprised|looks like it might|looks like it could)\b/],
+    [/\b(hard to read|hard to tell|hard to say|can't tell|not sure what|unclear)\b/],
+    [/\b(not much (happening|going on|to see|moving)|nothing (obvious|happening|going on)|quiet out)\b/],
+    [/\b(same as (before|earlier|it was|always)|hasn't changed|no different|about the same)\b/],
+    [/\b(worth watching|keep an eye|pay attention|watch this)\b/],
+  ];
+  for(const [pat] of INTENT_GROUPS){
+    if(pat.test(lc)){
+      if(S.lineHistory.slice(-12).some(l=>pat.test(l.toLowerCase())))return true;
+    }
   }
 
-  // Concept-level idea dedup — reduce to core idea, reject if same idea appeared recently
-  // Maps key ideas to detection patterns
+  // Topic balancing — strict caps within last 10 lines
+  const topics=[
+    {pat:/\bwind\b|\bwindy\b|\bgusts?\b|\bmph\b/},
+    {pat:/\bpressure\b|\bbarometer\b/},
+    {pat:/\blight\b|\bovercast\b|\bcloudy\b|\bsky\b|\bclouds\b/},
+    {pat:/\bstill\b|\bquiet\b|\bsilent\b/},
+    {pat:/\blake\b|\bwater\b|\bhiggins\b/},
+  ];
+  for(const topic of topics){
+    if(topic.pat.test(lc)){
+      if(S.lineHistory.slice(-10).filter(l=>topic.pat.test(l.toLowerCase())).length>=2)return true;
+    }
+  }
+
+  // Keyword saturation — any single word 3x in last 6 lines
+  for(const kw of['wind','light','pressure','sky','usually','still','feels','lake','clouds']){
+    if(lc.includes(kw)&&S.lineHistory.slice(-6).filter(l=>l.toLowerCase().includes(kw)).length>=3)return true;
+  }
+
+  // Concept idea dedup
   const IDEAS=[
-    {id:'quiet',pat:/\b(quiet|quieter|quietest|still|stillness|silent)\b/},
-    {id:'change',pat:/\b(change|changed|changing|shift|shifted|different|turn)\b/},
-    {id:'settle',pat:/\b(settle|settled|settling|unsettled|resolve|resolved)\b/},
-    {id:'waiting',pat:/\b(wait|waiting|watch|watching|notice|noticing)\b/},
-    {id:'weather_coming',pat:/\b(coming|approach|building|building up|looks like)\b/},
-    {id:'hard_to_read',pat:/\b(hard to|difficult to|can't|cant|won't)\b/},
+    {pat:/\b(quiet|quieter|quietest|still|stillness|silent)\b/},
+    {pat:/\b(change|changed|changing|shift|shifted|different|turn)\b/},
+    {pat:/\b(settle|settled|settling|unsettled|resolve|resolved)\b/},
+    {pat:/\b(wait|waiting|watch|watching|notice|noticing)\b/},
+    {pat:/\b(coming|approach|building|looks like)\b/},
+    {pat:/\b(hard to|difficult to|can't|cant|won't)\b/},
   ];
   for(const idea of IDEAS){
-    if(idea.pat.test(lc)){
-      const hits=S.lineHistory.slice(-12).filter(l=>idea.pat.test(l.toLowerCase())).length;
-      if(hits>=2)return true;
-    }
+    if(idea.pat.test(lc)&&S.lineHistory.slice(-12).filter(l=>idea.pat.test(l.toLowerCase())).length>=2)return true;
   }
 
   // "usually" throttle — max 1 in last 5
@@ -619,12 +723,17 @@ function lifestyleLine(){
 function groqLine(){
   const pool=normalizeElderLines(S.elderPool).map(x=>x.text).filter(lineFits);
   if(!pool.length)return null;
-  // Pick from pool, try up to 5 before giving up
   const shuffled=shuffle(pool);
-  for(const t of shuffled.slice(0,5)){
-    if(!isTooRepetitive(t))return t;
+  for(const t of shuffled.slice(0,8)){
+    if(isTooRepetitive(t))continue;
+    // Reject if too long — feels written
+    if(t.split(/\s+/).length>14)continue;
+    // Reject comma + conjunction — written sentence feel
+    if(/,\s*(and|but|so|yet|or)\b/i.test(t))continue;
+    return t;
   }
-  return shuffled[0]||null; // fallback to first even if repetitive
+  // Relaxed fallback — accept first non-repetitive even if slightly long
+  return shuffled.find(t=>!isTooRepetitive(t))||null;
 }
 function fragmentLine(){
   return pick(FRAGMENTS);
@@ -657,51 +766,79 @@ function nonSequiturLine(){
   const pool=NON_SEQUITUR.filter(t=>!isTooRepetitive(t));
   return pool.length?pick(shuffle(pool)):null;
 }
+function neutralLine(){
+  const pool=NEUTRAL_LINES.filter(t=>!isTooRepetitive(t));
+  return pool.length?pick(shuffle(pool)):pick(NEUTRAL_LINES);
+}
+function leftTurnLine(){
+  const pool=LEFT_TURN.filter(t=>!isTooRepetitive(t));
+  return pool.length?pick(shuffle(pool)):pick(LEFT_TURN);
+}
+function realityLine(){
+  const pool=REALITY_LINES.filter(t=>!isTooRepetitive(t));
+  return pool.length?pick(shuffle(pool)):pick(REALITY_LINES);
+}
+function ultraPlainLine(){
+  // Only blocked if identical line appeared in last 10
+  const pool=ULTRA_PLAIN.filter(t=>!S.lineHistory.slice(-10).includes(t));
+  return pool.length?pick(shuffle(pool)):pick(ULTRA_PLAIN);
+}
 
 // ── STREAM ENGINE ────────────────────────────────────────────────────────────
 // Weighted mode selection — no fixed order
 const MODE_WEIGHTS={
-  groq:52,          // primary voice
-  field:10,         // real conditions
-  behavior:8,       // insight when warranted
-  context:6,        // regional grounding
+  groq:38,          // AI assisting, not leading
+  field:8,          // real conditions — restrained
+  behavior:6,       // insight when warranted
+  context:5,        // regional grounding
   lifestyle:4,      // subtle
-  fragment:12,      // thought decay
-  memory:6,         // subtle callbacks
+  fragment:14,      // thought decay
+  memory:5,         // subtle callbacks
   curiosity:4,      // time-gated
   proximity:4,      // location grounding
-  casual:10,        // casual human thought
+  casual:14,        // casual human thought
   offhand_memory:8, // non-weather continuity
-  non_sequitur:8    // breaks pattern
+  non_sequitur:12,  // breaks pattern
+  neutral:10,       // flat reset lines
+  left_turn:10,     // off-topic human moment
+  reality:8,        // literal camera grounding
+  ultra_plain:4     // realism spikes — bypass most filters
 };
 
 function pickMode(){
-  // Build weighted pool
   const pool=[];
   Object.entries(MODE_WEIGHTS).forEach(([k,v])=>{for(let i=0;i<v;i++)pool.push(k);});
-  // Prevent 3x same mode in a row
+  const HUMAN_RANDOM=new Set(['non_sequitur','left_turn','casual']);
+  const lastMode=S.streamModes[S.streamModes.length-1];
   let mode=pick(pool),tries=0;
-  const last3=S.streamModes.slice(-2);
-  while(last3.length>=2&&last3.every(m=>m===mode)&&tries<20){
-    mode=pick(pool);tries++;
-  }
+  // Prevent same mode twice in a row
+  while(S.streamModes.slice(-2).every(m=>m===mode)&&tries<20){mode=pick(pool);tries++;}
+  // Prevent human-random modes back-to-back
+  while(HUMAN_RANDOM.has(lastMode)&&HUMAN_RANDOM.has(mode)&&tries<30){mode=pick(pool);tries++;}
   return mode;
 }
 
 function generateNextLine(){
-  // 10% silence
-  if(r()<0.10)return null;
+  // 20% silence
+  if(r()<0.20)return null;
+
+  // ── MICRO-RESET RULE ─────────────────────────────────────────────────────
+  const last12=S.lineHistory.slice(-12);
+  const uncertainPat=/\b(hard to|might|could|maybe|not sure|wouldn't|can't tell|unclear)\b/;
+  const changePat=/\b(change|changed|different|shift|shifted|turn|turning)\b/;
+  const uncertainCount=last12.filter(l=>uncertainPat.test(l.toLowerCase())).length;
+  const changeCount=last12.filter(l=>changePat.test(l.toLowerCase())).length;
+  if(uncertainCount>=3||changeCount>=3){
+    const t=r()<0.5?neutralLine():realityLine();
+    if(t){const cleaned=dialNarrator(t);if(cleaned&&lineFits(cleaned))return{t:cleaned,mode:r()<0.5?'neutral':'reality',dim:true,live:false};}
+  }
 
   const mode=pickMode();
   let text=null;
 
-  // Try Groq first — only for modes where it makes sense, not for human-voice modes
   const tryGroqFirst=['groq','behavior','field','context'];
-  if(tryGroqFirst.includes(mode)&&S.elderPool.length>0&&r()<0.75){
-    text=groqLine();
-  }
+  if(tryGroqFirst.includes(mode)&&S.elderPool.length>0&&r()<0.75){text=groqLine();}
 
-  // Mode-specific fallback
   if(!text){
     if(mode==='field')text=fieldLine();
     else if(mode==='behavior')text=behaviorLine();
@@ -714,37 +851,38 @@ function generateNextLine(){
     else if(mode==='casual')text=casualLine();
     else if(mode==='offhand_memory')text=offhandMemoryLine();
     else if(mode==='non_sequitur')text=nonSequiturLine();
+    else if(mode==='neutral')text=neutralLine();
+    else if(mode==='left_turn')text=leftTurnLine();
+    else if(mode==='reality')text=realityLine();
+    else if(mode==='ultra_plain')text=ultraPlainLine();
     else if(mode==='groq')text=groqLine()||fallbackLine();
     else text=fallbackLine();
   }
 
   if(!text)return null;
 
-  // Fragment injection: 15% (reduced from 25%) — but only if last 6 lines had <2 fragments
+  // Fragment injection: 6% — blocked if last 6 lines had 2+ fragments
   const recentFragments=S.streamModes.slice(-6).filter(m=>m==='fragment').length;
-  if(recentFragments<2&&r()<0.15&&mode!=='field'&&mode!=='curiosity'&&mode!=='proximity'&&mode!=='casual'&&mode!=='non_sequitur'){
+  if(recentFragments<2&&r()<0.05&&mode!=='field'&&mode!=='curiosity'&&mode!=='proximity'&&mode!=='neutral'&&mode!=='left_turn'&&mode!=='reality'){
     text=fragmentLine();
   }
 
-  // Micro-imperfection: 10% chance to drop trailing punctuation (trailing thought feel)
-  if(r()<0.10&&text&&text.endsWith('.')){
-    text=text.slice(0,-1);
-  }
+  // Micro-imperfection: 10% chance to drop trailing punctuation
+  if(r()<0.10&&text&&text.endsWith('.')){text=text.slice(0,-1);}
 
   const cleaned=dialNarrator(text);
   if(!cleaned)return null;
   if(!lineFits(cleaned))return null;
 
-  // Hard-reject explanation patterns before accepting any line
   const lc=cleaned.toLowerCase();
   if(/\b(this (tells|means|shows) you|you can see that|this is why|that's why|which means)\b/.test(lc))return null;
-  if(/\b(x usually means|this tends to|when x happens)\b/.test(lc))return null;
+  if(/\b(this tends to|when x happens|this is what happens)\b/.test(lc))return null;
 
-  if(mode!=='fragment'&&isTooRepetitive(cleaned))return null;
+  if(mode!=='fragment'&&mode!=='neutral'&&mode!=='left_turn'&&mode!=='reality'&&mode!=='ultra_plain'&&isTooRepetitive(cleaned))return null;
 
   if(mode==='curiosity'||mode==='proximity')S.lastCuriosity=Date.now();
 
-  const isDim=mode==='groq'||mode==='fragment'||mode==='memory'||mode==='curiosity'||mode==='casual'||mode==='offhand_memory'||mode==='non_sequitur';
+  const isDim=!['field','context','behavior'].includes(mode);
   return {t:cleaned, mode, dim:isDim, live:mode==='field'};
 }
 
@@ -755,9 +893,20 @@ function buildStream(){
   const tempOpeners=[];
   const DATA_MODES=new Set(['field','behavior']);
 
-  for(let attempts=0;attempts<140&&newStream.length<28;attempts++){
+  // Pacing variation: every 3–5 minutes, reduce stream density for 30–40s
+  const now=Date.now();
+  const pacingGap=(3+r()*2)*60*1000;
+  if(now-S.lastPacingThrottle>pacingGap){
+    S.lastPacingThrottle=now;
+  }
+  const inSlowPeriod=now-S.lastPacingThrottle<35*1000;
+  const targetLines=inSlowPeriod?16:26;
+  const dropChance=inSlowPeriod?0.25:0.12;
+
+  for(let attempts=0;attempts<140&&newStream.length<targetLines;attempts++){
     const item=generateNextLine();
     if(!item)continue;
+    if(Math.random()<dropChance)continue;
 
     // No more than 2 data-driven lines in a row
     const lastTwo=newStream.slice(-2);
@@ -918,7 +1067,8 @@ setTimeout(()=>{hydrateElder();setInterval(hydrateElder,2*60*1000);},10000);
 
 // Re-render stream every 90s — new random order, new fragment placement
 renderStream();
-setInterval(renderStream,90*1000);
+// Jittered interval — prevents predictable refresh cadence
+(function scheduleRender(){setTimeout(()=>{renderStream();scheduleRender();},(80+Math.random()*30)*1000);})();
 </script>
 </body>
 </html>
