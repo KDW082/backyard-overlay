@@ -31,7 +31,7 @@ body.debug{background:#091523!important;}
   --ts:0 2px 14px rgba(0,0,0,0.75),0 1px 3px rgba(0,0,0,0.95);
 }
 
-/* TOP BAR */
+/* BAR */
 .bar{
   position:absolute;top:18px;left:20px;right:20px;height:96px;
   background:var(--blue-d);
@@ -64,8 +64,8 @@ body.debug{background:#091523!important;}
   font-size:28px;font-weight:500;color:var(--w9);
   letter-spacing:0.02em;padding:0 44px;text-shadow:var(--ts);flex-shrink:0;
 }
-.bar-item.live{color:var(--w9);font-weight:500;opacity:1;}
-.bar-item.dim{color:var(--w9);font-weight:500;font-style:italic;opacity:.62;}
+.bar-item.live{opacity:1;}
+.bar-item.dim{opacity:.62;font-style:italic;}
 .bar-sep{color:rgba(150,195,255,0.30);padding:0 2px;}
 .bar-time{
   padding:0 28px;flex-shrink:0;text-align:right;
@@ -179,10 +179,6 @@ const S = {
     pressureTrend:null,
     weatherCode:null,
     temp:null,
-    lastWindShiftAt:null,
-    lastPressureShiftAt:null,
-    lastSkyShiftAt:null,
-    lastTempShiftAt:null,
     callbacks:[]
   }
 };
@@ -196,14 +192,14 @@ const MILESTONES = [
 ];
 
 const PHENOLOGY = [
-  {s:[3,1],e:[3,21],n:'Ice-out window open in Roscommon County.'},
-  {s:[4,1],e:[4,25],n:'Woodcock display flights run at dawn and dusk this time of year.'},
+  {s:[3,1],e:[3,21],n:'Ice-out window is open in Roscommon County.'},
+  {s:[4,1],e:[4,25],n:'Woodcock display flights usually run at dawn and dusk.'},
   {s:[4,10],e:[4,25],n:'Loon return window is usually open around now.'},
-  {s:[4,20],e:[5,10],n:'Spring warbler migration is near peak in this stretch.'},
+  {s:[4,20],e:[5,10],n:'Spring warbler migration is usually near peak now.'},
   {s:[5,1],e:[5,20],n:'Morel season tends to open in mixed hardwood and pine.'},
   {s:[5,25],e:[6,15],n:'Fireflies usually start showing up around early June.'},
   {s:[6,15],e:[7,10],n:'Fawn season is usually active now.'},
-  {s:[8,1],e:[9,1],n:'Perseid window opens this month. Best after midnight.'},
+  {s:[8,1],e:[9,1],n:'Perseid window is open this month. Best after midnight.'},
   {s:[8,20],e:[9,20],n:'Early color usually starts in the swamp maples first.'},
   {s:[9,1],e:[10,1],n:'Hawk migration usually gets moving in September.'},
   {s:[9,15],e:[10,15],n:'Peak fall color usually lives in this window.'},
@@ -326,68 +322,69 @@ function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
 function tokenize(s){return String(s).toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean);}
 function opener(s){return tokenize(s).slice(0,2).join(' ');}
 function period(){
-  const h = new Date().getHours();
-  if(h < 5) return 'night';
-  if(h < 8) return 'dawn';
-  if(h < 12) return 'morning';
-  if(h < 15) return 'midday';
-  if(h < 19) return 'afternoon';
-  if(h < 22) return 'dusk';
-  return 'night';
+  const h=new Date().getHours();
+  if(h<5)return'night';
+  if(h<8)return'dawn';
+  if(h<12)return'morning';
+  if(h<15)return'midday';
+  if(h<19)return'afternoon';
+  if(h<22)return'dusk';
+  return'night';
 }
 function season(){
-  const m = new Date().getMonth();
-  if(m < 2 || m === 11) return 'winter';
-  if(m < 5) return 'spring';
-  if(m < 8) return 'summer';
-  return 'autumn';
+  const m=new Date().getMonth();
+  if(m<2||m===11)return'winter';
+  if(m<5)return'spring';
+  if(m<8)return'summer';
+  return'autumn';
 }
 function compassDir(d){
   return ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d/22.5)%16];
 }
 function pTrend(){
-  if(S.pressureTrend.length < 2) return 'stable';
-  const d = S.pressureTrend[S.pressureTrend.length-1].p - S.pressureTrend[0].p;
-  if(d > 2) return 'rising';
-  if(d < -2) return 'falling';
-  return 'stable';
+  if(S.pressureTrend.length<2)return'stable';
+  const d=S.pressureTrend[S.pressureTrend.length-1].p-S.pressureTrend[0].p;
+  if(d>2)return'rising';
+  if(d<-2)return'falling';
+  return'stable';
 }
 function phenNow(){
-  const now = new Date(), m = now.getMonth()+1, d = now.getDate();
-  const n = (a,b)=>a*100+b, cur=n(m,d);
+  const now=new Date(),m=now.getMonth()+1,d=now.getDate();
+  const n=(a,b)=>a*100+b,cur=n(m,d);
   return PHENOLOGY.filter(p=>{
-    const s=n(p.s[0],p.s[1]), e=n(p.e[0],p.e[1]);
-    return s<=e ? cur>=s && cur<=e : cur>=s || cur<=e;
+    const s=n(p.s[0],p.s[1]),e=n(p.e[0],p.e[1]);
+    return s<=e?cur>=s&&cur<=e:cur>=s||cur<=e;
   });
 }
 function lineSimilarity(a,b){
-  const A=new Set(tokenize(a)), B=new Set(tokenize(b));
-  if(!A.size || !B.size) return 0;
-  let overlap=0; A.forEach(t=>{if(B.has(t)) overlap++;});
-  const j = overlap/(A.size+B.size-overlap);
-  const prefix = opener(a) && opener(a)===opener(b) ? 0.25 : 0;
-  const len = Math.abs(a.length-b.length)<8 ? 0.1 : 0;
-  return j + prefix + len;
+  const A=new Set(tokenize(a)),B=new Set(tokenize(b));
+  if(!A.size||!B.size)return 0;
+  let overlap=0;
+  A.forEach(t=>{if(B.has(t))overlap++;});
+  const j=overlap/(A.size+B.size-overlap);
+  const prefix=opener(a)&&opener(a)===opener(b)?0.25:0;
+  const len=Math.abs(a.length-b.length)<8?0.1:0;
+  return j+prefix+len;
 }
 function skyL(code,cloud){
-  if([0].includes(code)) return 'Clear';
-  if([1].includes(code)) return 'Mainly clear';
-  if([2].includes(code)) return 'Partly cloudy';
-  if([3].includes(code)) return 'Overcast';
-  if([45,48].includes(code)) return 'Fog';
-  if([51,53,55].includes(code)) return 'Drizzle';
-  if([61,63,65,80,81,82].includes(code)) return 'Rain';
-  if([71,73,75,77].includes(code)) return 'Snow';
-  if([95,96,99].includes(code)) return 'Thunderstorm';
-  return `${cloud}% cloud`;
+  if([0].includes(code))return'Clear';
+  if([1].includes(code))return'Mainly clear';
+  if([2].includes(code))return'Partly cloudy';
+  if([3].includes(code))return'Overcast';
+  if([45,48].includes(code))return'Fog';
+  if([51,53,55].includes(code))return'Drizzle';
+  if([61,63,65,80,81,82].includes(code))return'Rain';
+  if([71,73,75,77].includes(code))return'Snow';
+  if([95,96,99].includes(code))return'Thunderstorm';
+  return`${cloud}% cloud`;
 }
 function windL(mph){
-  if(mph<1) return 'No surface movement';
-  if(mph<5) return 'Barely perceptible';
-  if(mph<10) return 'Leaves stirring';
-  if(mph<15) return 'Small branches moving';
-  if(mph<20) return 'Canopy active';
-  return 'Sustained canopy motion';
+  if(mph<1)return'No surface movement';
+  if(mph<5)return'Barely perceptible';
+  if(mph<10)return'Leaves stirring';
+  if(mph<15)return'Small branches moving';
+  if(mph<20)return'Canopy active';
+  return'Sustained canopy motion';
 }
 function moonName(p){
   if(p<0.03||p>0.97)return'New Moon';
@@ -400,47 +397,47 @@ function moonName(p){
   return'Waning Crescent';
 }
 function scaleOverlay(){
-  const sx=window.innerWidth/1920, sy=window.innerHeight/1080, sc=Math.min(sx,sy);
+  const sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);
   document.body.style.transform=`scale(${sc})`;
   document.body.style.marginLeft=`${(window.innerWidth-1920*sc)/2}px`;
   document.body.style.marginTop=`${(window.innerHeight-1080*sc)/2}px`;
 }
 function showC(el,ms,cb){
-  if(S.centerBusy) return false;
+  if(S.centerBusy)return false;
   S.centerBusy=true;
   el.classList.add('active');
   setTimeout(()=>{
     el.classList.remove('active');
     setTimeout(()=>{
       S.centerBusy=false;
-      if(cb) cb();
+      if(cb)cb();
     },1200);
   },ms);
   return true;
 }
 function rememberLine(item){
   S.lineHistory.push(item.t);
-  if(S.lineHistory.length > 120) S.lineHistory.shift();
-  S.modeHistory.push(item.mode || item.type || 'misc');
-  if(S.modeHistory.length > 120) S.modeHistory.shift();
+  if(S.lineHistory.length>120)S.lineHistory.shift();
+  S.modeHistory.push(item.mode||item.type||'misc');
+  if(S.modeHistory.length>120)S.modeHistory.shift();
   S.recentOpeners.push(opener(item.t));
-  if(S.recentOpeners.length > 40) S.recentOpeners.shift();
+  if(S.recentOpeners.length>40)S.recentOpeners.shift();
 }
 function normalizeElderLines(lines){
-  return (lines||[]).map(l=>{
-    if(typeof l === 'string') return {text:l,mode:'quiet_narrative'};
-    return {text:l.text || l.line || '', mode:l.mode || 'quiet_narrative'};
+  return(lines||[]).map(l=>{
+    if(typeof l==='string')return{text:l,mode:'quiet_narrative'};
+    return{text:l.text||l.line||'',mode:l.mode||'quiet_narrative'};
   }).filter(x=>x.text);
 }
 function dialNarrator(text){
-  if(!text) return text;
-  let out = text.trim();
-  const kills = ['beautiful','amazing','perfect','magical','peaceful','serene','escape','getaway','experience'];
+  if(!text)return text;
+  let out=text.trim();
+  const kills=['beautiful','amazing','perfect','magical','peaceful','serene','escape','getaway','experience'];
   kills.forEach(w=>{
-    const r = new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'gi');
-    out = out.replace(r,'');
+    const r=new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'gi');
+    out=out.replace(r,'');
   });
-  const swaps = [
+  const swaps=[
     [/\bstarting to\b/gi,'beginning to'],
     [/\bholding at\b/gi,'sitting at'],
     [/\bconditions like this\b/gi,'this setup'],
@@ -448,27 +445,24 @@ function dialNarrator(text){
     [/\bshoreline\b/gi,'water']
   ];
   swaps.forEach(([a,b])=>out=out.replace(a,b));
-  out = out.replace(/\s+/g,' ').replace(/\s+([,.—])/g,'$1').trim();
-  if(out.length > 92){
-    const cut = out.lastIndexOf(' ',88);
-    out = out.slice(0, cut>55 ? cut : 88).trim();
+  out=out.replace(/\s+/g,' ').replace(/\s+([,.—])/g,'$1').trim();
+  if(out.length>92){
+    const cut=out.lastIndexOf(' ',88);
+    out=out.slice(0,cut>55?cut:88).trim();
   }
-  if(out && !/[.!?]$/.test(out)) out += '.';
-  return out.charAt(0).toUpperCase() + out.slice(1);
+  if(out&&!/[.!?]$/.test(out))out+='.';
+  return out.charAt(0).toUpperCase()+out.slice(1);
 }
 function lineFitsCurrentContext(text){
-  const lc = String(text).toLowerCase();
-  const s = season();
-  const p = period();
-
-  const seasonConflicts = {
-    spring:['rut','fall color','deep winter','ski runs','fresh snow','ice formation','summer plays best'],
-    summer:['rut','fall color','deep winter','fresh snow','ski runs','ice formation','ice-out'],
-    autumn:['deep winter','fresh snow','ski runs','ice formation','spring warbler','ice-out','fawn season'],
-    winter:['dock coffee','boating','golf','fireflies','morel season','spring warbler','fawn season','fall color']
+  const lc=String(text).toLowerCase();
+  const s=season(),p=period();
+  const seasonConflicts={
+    spring:['rut','fall color','deep winter','ski','fresh snow','ice formation'],
+    summer:['rut','fall color','deep winter','fresh snow','ski','ice formation','ice-out'],
+    autumn:['deep winter','fresh snow','ski','ice formation','spring warbler','ice-out'],
+    winter:['dock coffee','boating','golf','fireflies','morel','warbler','fawn season','fall color']
   };
-
-  const periodConflicts = {
+  const periodConflicts={
     dawn:['midday','after dark','night runs','last light','dusk'],
     morning:['after dark','night runs','last light','dusk'],
     midday:['after dark','night runs','first light','dawn'],
@@ -476,116 +470,109 @@ function lineFitsCurrentContext(text){
     dusk:['first light','midday','morning settles'],
     night:['first light','dock coffee','midday','afternoon starts']
   };
-
-  if((seasonConflicts[s]||[]).some(k=>lc.includes(k))) return false;
-  if((periodConflicts[p]||[]).some(k=>lc.includes(k))) return false;
+  if((seasonConflicts[s]||[]).some(k=>lc.includes(k)))return false;
+  if((periodConflicts[p]||[]).some(k=>lc.includes(k)))return false;
   return true;
 }
 function looksRepetitive(text,mode){
-  const recent = S.lineHistory.slice(-40);
-  const badWords = ['beautiful','amazing','perfect','magical','peaceful','serene'];
-  const toks = tokenize(text);
-  if(toks.filter(t=>badWords.includes(t)).length>0) return true;
-  if(S.recentOpeners.slice(-16).includes(opener(text))) return true;
-  if(S.modeHistory.slice(-2).every(m=>m===mode)) return true;
-  if(!lineFitsCurrentContext(text)) return true;
-  return recent.some(r=>lineSimilarity(r,text) > 0.42);
+  const recent=S.lineHistory.slice(-40);
+  const badWords=['beautiful','amazing','perfect','magical','peaceful','serene'];
+  const toks=tokenize(text);
+  if(toks.filter(t=>badWords.includes(t)).length>0)return true;
+  if(S.recentOpeners.slice(-16).includes(opener(text)))return true;
+  if(S.modeHistory.slice(-2).every(m=>m===mode))return true;
+  if(!lineFitsCurrentContext(text))return true;
+  return recent.some(r=>lineSimilarity(r,text)>0.42);
 }
 function modeOrder(count){
   const pool=[];
-  Object.entries(MODE_WEIGHTS).forEach(([k,v])=>{for(let i=0;i<v;i++) pool.push(k);});
+  Object.entries(MODE_WEIGHTS).forEach(([k,v])=>{for(let i=0;i<v;i++)pool.push(k);});
   const out=[];
-  while(out.length<count && pool.length){
-    let choice = pick(pool), tries=0;
-    while(out.length>=2 && out[out.length-1]===choice && out[out.length-2]===choice && tries<20){
-      choice = pick(pool); tries++;
+  while(out.length<count&&pool.length){
+    let choice=pick(pool),tries=0;
+    while(out.length>=2&&out[out.length-1]===choice&&out[out.length-2]===choice&&tries<20){
+      choice=pick(pool);tries++;
     }
     out.push(choice);
   }
   return out;
 }
 function pressureMeaning(){
-  const tr = pTrend();
-  if(tr === 'falling') return 'Pressure dropped. Usually changes things.';
-  if(tr === 'rising') return 'Pressure came back some.';
-  return 'Pressure stayed level.';
+  const tr=pTrend();
+  if(tr==='falling')return'Pressure dropped. Usually changes things.';
+  if(tr==='rising')return'Pressure came back some.';
+  return'Pressure stayed level.';
 }
 function memoryCallbackPool(){
-  const now = Date.now();
-  return (S.memory.callbacks || [])
-    .filter(c => now - c.at > 20*60*1000)
-    .map(c => c.text);
+  const now=Date.now();
+  return(S.memory.callbacks||[])
+    .filter(c=>now-c.at>20*60*1000)
+    .map(c=>c.text);
 }
 function updateMemory(){
-  if(!S.weather) return;
-  const now = Date.now();
-  const currentPressureTrend = pTrend();
+  if(!S.weather)return;
+  const now=Date.now();
+  const currentPressureTrend=pTrend();
 
-  if(S.memory.windDir !== null){
-    const dirChanged = Math.abs(S.weather.wind_direction_10m - S.memory.windDir) > 35;
-    const speedChanged = Math.abs(S.weather.wind_speed_10m - S.memory.windSpeed) >= 4;
-    if(dirChanged || speedChanged){
-      S.memory.lastWindShiftAt = now;
+  if(S.memory.windDir!==null){
+    const dirChanged=Math.abs(S.weather.wind_direction_10m-S.memory.windDir)>35;
+    const speedChanged=Math.abs(S.weather.wind_speed_10m-S.memory.windSpeed)>=4;
+    if(dirChanged||speedChanged){
       S.memory.callbacks.push({type:'wind_shift',at:now,text:'Wind changed earlier. Never really settled.'});
     }
   }
 
-  if(S.memory.pressureTrend !== null && S.memory.pressureTrend !== currentPressureTrend){
-    S.memory.lastPressureShiftAt = now;
+  if(S.memory.pressureTrend!==null&&S.memory.pressureTrend!==currentPressureTrend){
     S.memory.callbacks.push({
       type:'pressure_shift',
       at:now,
-      text: currentPressureTrend === 'falling'
-        ? 'Pressure turned and stayed unsettled.'
-        : currentPressureTrend === 'rising'
-        ? 'Pressure recovered a bit.'
-        : 'Pressure leveled out.'
+      text:currentPressureTrend==='falling'
+        ?'Pressure turned and stayed unsettled.'
+        :currentPressureTrend==='rising'
+        ?'Pressure recovered a bit.'
+        :'Pressure leveled out.'
     });
   }
 
-  if(S.memory.weatherCode !== null && S.memory.weatherCode !== S.weather.weather_code){
-    S.memory.lastSkyShiftAt = now;
+  if(S.memory.weatherCode!==null&&S.memory.weatherCode!==S.weather.weather_code){
     S.memory.callbacks.push({type:'sky_shift',at:now,text:'Sky changed since earlier.'});
   }
 
-  if(S.memory.temp !== null && Math.abs(S.weather.temperature_2m - S.memory.temp) >= 5){
-    S.memory.lastTempShiftAt = now;
+  if(S.memory.temp!==null&&Math.abs(S.weather.temperature_2m-S.memory.temp)>=5){
     S.memory.callbacks.push({
       type:'temp_shift',
       at:now,
-      text: S.weather.temperature_2m > S.memory.temp
-        ? 'It warmed up a bit.'
-        : 'Temperature dropped off some.'
+      text:S.weather.temperature_2m>S.memory.temp?'It warmed up a bit.':'Temperature dropped off some.'
     });
   }
 
-  S.memory.windDir = S.weather.wind_direction_10m;
-  S.memory.windSpeed = S.weather.wind_speed_10m;
-  S.memory.pressureTrend = currentPressureTrend;
-  S.memory.weatherCode = S.weather.weather_code;
-  S.memory.temp = S.weather.temperature_2m;
-  S.memory.callbacks = S.memory.callbacks.filter(c => now-c.at < 3*60*60*1000).slice(-10);
+  S.memory.windDir=S.weather.wind_direction_10m;
+  S.memory.windSpeed=S.weather.wind_speed_10m;
+  S.memory.pressureTrend=currentPressureTrend;
+  S.memory.weatherCode=S.weather.weather_code;
+  S.memory.temp=S.weather.temperature_2m;
+  S.memory.callbacks=S.memory.callbacks.filter(c=>now-c.at<3*60*60*1000).slice(-10);
 }
 function lessonPool(){
   const out=[];
-  const p=period(), s=season();
+  const p=period(),s=season();
   if(S.weather){
-    if(S.weather.wind_speed_10m >= 10) out.push('Wind in the tops usually tells you more than the ground does.');
-    if([61,63,65,80,81,82].includes(S.weather.weather_code)) out.push('Rain usually pulls smaller movement tighter to cover.');
-    if(S.weather.temperature_2m <= 35) out.push('Cold air carries sound farther.');
-    if(S.weather.temperature_2m >= 75) out.push('Heat flattens the middle of the day first.');
+    if(S.weather.wind_speed_10m>=10)out.push('Wind in the tops usually tells you more than the ground does.');
+    if([61,63,65,80,81,82].includes(S.weather.weather_code))out.push('Rain usually pulls smaller movement tighter to cover.');
+    if(S.weather.temperature_2m<=35)out.push('Cold air carries sound farther.');
+    if(S.weather.temperature_2m>=75)out.push('Heat flattens the middle of the day first.');
   }
-  if(p === 'dusk') out.push('Last light usually compresses things into a shorter window.');
-  if(p === 'night') out.push('After dark, sound usually reads the place faster than sight.');
-  if(s === 'autumn') out.push('In fall, edges matter more once light starts dropping.');
-  if(s === 'winter') out.push('Fresh cold makes small sound travel farther through the trees.');
+  if(p==='dusk')out.push('Last light usually compresses things into a shorter window.');
+  if(p==='night')out.push('After dark, sound usually reads the place faster than sight.');
+  if(s==='autumn')out.push('In fall, edges matter more once light starts dropping.');
+  if(s==='winter')out.push('Fresh cold makes small sound travel farther through the trees.');
   return out;
 }
 function parseFc(h){
-  if(!h||!h.time) return [];
-  const now = new Date(), r=[];
-  for(let i=0;i<h.time.length && r.length<6;i++){
-    const t = new Date(h.time[i]);
+  if(!h||!h.time)return[];
+  const now=new Date(),r=[];
+  for(let i=0;i<h.time.length&&r.length<6;i++){
+    const t=new Date(h.time[i]);
     if(t>now){
       r.push({
         hoursOut:Math.round((t-now)/3600000),
@@ -600,37 +587,37 @@ function parseFc(h){
 }
 function fcInsight(){
   const fc=S.forecast||[];
-  if(!fc.length || !S.weather) return null;
+  if(!fc.length||!S.weather)return null;
   const rain=fc.find(h=>h.precipProb>50);
   if(rain){
-    const l = rain.code>=95 ? 'Storm' : rain.code>=61 ? 'Rain' : 'Drizzle';
-    return `${l} looks more likely ${rain.hoursOut<=1?'soon':'later on'}.`;
+    const l=rain.code>=95?'Storm':rain.code>=61?'Rain':'Drizzle';
+    return`${l} looks more likely ${rain.hoursOut<=1?'soon':'later on'}.`;
   }
-  const later = fc[Math.min(fc.length-1,3)];
+  const later=fc[Math.min(fc.length-1,3)];
   if(later){
     const drop=S.weather.temperature_2m-later.temp;
-    if(drop>8) return `Air drops about ${drop.toFixed(0)}° later.`;
-    if(drop<-8) return `Warms up about ${Math.abs(drop).toFixed(0)}° later.`;
-    if(later.wind-S.weather.wind_speed_10m>6) return 'Wind builds later.';
+    if(drop>8)return`Air drops about ${drop.toFixed(0)}° later.`;
+    if(drop<-8)return`Warms up about ${Math.abs(drop).toFixed(0)}° later.`;
+    if(later.wind-S.weather.wind_speed_10m>6)return'Wind builds later.';
   }
   return null;
 }
 function airLabel(aqi){
-  if(aqi==null || Number.isNaN(aqi)) return null;
-  if(aqi<=50) return 'Air quality clear';
-  if(aqi<=100) return 'Air quality moderate';
-  if(aqi<=150) return 'Air quality rough for sensitive groups';
-  return 'Air quality degraded';
+  if(aqi==null||Number.isNaN(aqi))return null;
+  if(aqi<=50)return'Air quality clear';
+  if(aqi<=100)return'Air quality moderate';
+  if(aqi<=150)return'Air quality rough for sensitive groups';
+  return'Air quality degraded';
 }
 function skyNarrative(){
-  if(!S.weather) return [];
+  if(!S.weather)return[];
   const code=S.weather.weather_code;
-  if([0,1].includes(code)) return ['Sky opened up for now.','Light is cleaner with the clouds off it.'];
-  if([2,3].includes(code)) return ['Flat sky. Harder to read things under it.','Cloud cover is doing most of the mood work right now.'];
-  if([45,48].includes(code)) return ['Fog shortens the scene.','The air is hiding more than usual.'];
-  if([61,63,65,80,81,82].includes(code)) return ['Rain changes the pace fast.','Wet weather pushes things tighter to cover.'];
-  if([71,73,75,77].includes(code)) return ['Snow changes the ground story fast.','Fresh snow makes every track matter more.'];
-  return [];
+  if([0,1].includes(code))return['Sky opened up for now.','Light is cleaner with the clouds off it.'];
+  if([2,3].includes(code))return['Flat sky. Harder to read things under it.','Cloud cover is doing most of the mood work right now.'];
+  if([45,48].includes(code))return['Fog shortens the scene.','The air is hiding more than usual.'];
+  if([61,63,65,80,81,82].includes(code))return['Rain changes the pace fast.','Wet weather pushes things tighter to cover.'];
+  if([71,73,75,77].includes(code))return['Snow changes the ground story fast.','Fresh snow makes every track matter more.'];
+  return[];
 }
 function fieldObservationPool(){
   const out=[];
@@ -638,9 +625,9 @@ function fieldObservationPool(){
     out.push(`Sitting at ${S.weather.temperature_2m.toFixed(0)}° with ${skyL(S.weather.weather_code,S.weather.cloud_cover).toLowerCase()} overhead.`);
     out.push(`Wind ${S.weather.wind_speed_10m.toFixed(0)} mph ${compassDir(S.weather.wind_direction_10m)}.`);
     out.push(`Pressure ${pTrend()} at ${(S.weather.pressure_msl*0.02953).toFixed(2)} inHg.`);
-    if(S.weather.wind_speed_10m<4) out.push('Not much on the ground. Tops are doing more.');
-    if(S.weather.wind_speed_10m>=4 && S.weather.wind_speed_10m<10) out.push('Leaves are moving enough to hide small shifts.');
-    if(S.weather.wind_speed_10m>=10) out.push('Canopy is busy enough to cover a lot.');
+    if(S.weather.wind_speed_10m<4)out.push('Not much on the ground. Tops are doing more.');
+    if(S.weather.wind_speed_10m>=4&&S.weather.wind_speed_10m<10)out.push('Leaves are moving enough to hide small shifts.');
+    if(S.weather.wind_speed_10m>=10)out.push('Canopy is busy enough to cover a lot.');
   }
   out.push(...skyNarrative());
   out.push(...(TIME_LOCAL_LINES[period()]||[]));
@@ -649,19 +636,19 @@ function fieldObservationPool(){
 function behaviorInsightPool(){
   const out=[pressureMeaning()];
   const fci=fcInsight();
-  if(fci) out.push(fci);
+  if(fci)out.push(fci);
   out.push(...memoryCallbackPool());
-  if(S.weather && S.weather.wind_speed_10m<6) out.push('Lower wind usually makes things easier to read.');
-  if(S.weather && S.weather.wind_speed_10m>12) out.push('Wind like this hides more than it shows.');
-  if(period()==='dawn' || period()==='dusk') out.push('This light window usually does more with less.');
-  if(period()==='midday') out.push('Midday usually flattens things unless weather shifts.');
+  if(S.weather&&S.weather.wind_speed_10m<6)out.push('Lower wind usually makes things easier to read.');
+  if(S.weather&&S.weather.wind_speed_10m>12)out.push('Wind like this hides more than it shows.');
+  if(period()==='dawn'||period()==='dusk')out.push('This light window usually does more with less.');
+  if(period()==='midday')out.push('Midday usually flattens things unless weather shifts.');
   return out;
 }
 function northernContextPool(){
-  return [...REGIONAL_CONTEXT, ...shuffle(DESTINATION_LINES).slice(0,4), ...phenNow().map(p=>p.n)];
+  return[...REGIONAL_CONTEXT,...shuffle(DESTINATION_LINES).slice(0,4),...phenNow().map(p=>p.n)];
 }
 function lifestylePool(){
-  return [
+  return[
     ...(LIFESTYLE_LINES[season()]||[]),
     'Up here, being in the right spot saves more time than people expect.',
     'Close towns matter more here than people think.',
@@ -670,53 +657,46 @@ function lifestylePool(){
   ];
 }
 function quietNarrativePool(){
-  const elder = normalizeElderLines(S.elderPool).map(x=>x.text).filter(lineFitsCurrentContext);
-  const seasonals = (FIELD_JOURNAL_LINES[period()]||[]).concat(FIELD_JOURNAL_LINES.all||[]);
-  const lessons = Math.random() < 0.35 ? lessonPool() : [];
-  return elder.length ? elder.concat(seasonals, lessons) : seasonals.concat(lessons);
+  const elder=normalizeElderLines(S.elderPool).map(x=>x.text).filter(lineFitsCurrentContext);
+  const seasonals=(FIELD_JOURNAL_LINES[period()]||[]).concat(FIELD_JOURNAL_LINES.all||[]);
+  const lessons=Math.random()<0.35?lessonPool():[];
+  return elder.length?elder.concat(seasonals,lessons):seasonals.concat(lessons);
 }
 function extraDataItems(){
   const items=[];
   const moon=SunCalc.getMoonIllumination(new Date());
   items.push({t:`${moonName(moon.phase)} · ${(moon.fraction*100).toFixed(0)}% illuminated.`,type:'astro'});
-  if(S.air&&S.air.us_aqi!=null) items.push({t:`AQI ${Math.round(S.air.us_aqi)} · ${airLabel(Math.round(S.air.us_aqi))}.`,type:'air'});
-  if(S.weather){
-    items.push({t:`Wind feel · ${windL(S.weather.wind_speed_10m)}.`,type:'windfeel'});
-  }
+  if(S.air&&S.air.us_aqi!=null)items.push({t:`AQI ${Math.round(S.air.us_aqi)} · ${airLabel(Math.round(S.air.us_aqi))}.`,type:'air'});
+  if(S.weather)items.push({t:`Wind feel · ${windL(S.weather.wind_speed_10m)}.`,type:'windfeel'});
   return items;
 }
 function candidateFromMode(mode){
-  const now = Date.now();
-  const forceStrong = now - S.lastStrongLineAt > (5*60*1000);
+  const now=Date.now();
+  const forceStrong=now-S.lastStrongLineAt>5*60*1000;
 
-  if(mode==='field_observation' && forceStrong){
-    const strongPool = [
-      'Still.',
-      'Nothing obvious right now.',
-      'Same as earlier.',
-      'Could stay like this.'
-    ].filter(lineFitsCurrentContext);
-    const strong = strongPool.find(t=>!looksRepetitive(t,mode));
+  if(mode==='field_observation'&&forceStrong){
+    const strongPool=['Still.','Nothing obvious right now.','Same as earlier.','Could stay like this.'].filter(lineFitsCurrentContext);
+    const strong=strongPool.find(t=>!looksRepetitive(t,mode));
     if(strong){
-      S.lastStrongLineAt = now;
-      return {t:strong,mode,live:true};
+      S.lastStrongLineAt=now;
+      return{t:strong,mode,live:true};
     }
   }
 
   let pool=[];
-  if(mode==='field_observation') pool=fieldObservationPool();
-  if(mode==='behavior_insight') pool=behaviorInsightPool();
-  if(mode==='northern_context') pool=northernContextPool();
-  if(mode==='lifestyle_trigger') pool=lifestylePool();
-  if(mode==='quiet_narrative') pool=quietNarrativePool();
+  if(mode==='field_observation')pool=fieldObservationPool();
+  if(mode==='behavior_insight')pool=behaviorInsightPool();
+  if(mode==='northern_context')pool=northernContextPool();
+  if(mode==='lifestyle_trigger')pool=lifestylePool();
+  if(mode==='quiet_narrative')pool=quietNarrativePool();
 
-  pool = shuffle(pool).filter(lineFitsCurrentContext);
+  pool=shuffle(pool).filter(lineFitsCurrentContext);
   for(const raw of pool){
-    const t = dialNarrator(raw);
-    if(!looksRepetitive(t,mode)) return {t,mode,dim:mode==='quiet_narrative',live:mode==='field_observation'||mode==='northern_context'};
+    const t=dialNarrator(raw);
+    if(!looksRepetitive(t,mode))return{t,mode,dim:mode==='quiet_narrative',live:mode==='field_observation'||mode==='northern_context'};
   }
-  const fallback = pool.find(Boolean);
-  return fallback ? {t:dialNarrator(fallback),mode,dim:mode==='quiet_narrative',live:mode==='field_observation'||mode==='northern_context'} : null;
+  const fallback=pool.find(Boolean);
+  return fallback?{t:dialNarrator(fallback),mode,dim:mode==='quiet_narrative',live:mode==='field_observation'||mode==='northern_context'}:null;
 }
 function buildMarquee(){
   const items=[];
@@ -729,48 +709,48 @@ function buildMarquee(){
 
   shuffle(dataItems).slice(0,2).forEach(i=>items.push(i));
   modeOrder(10).forEach(mode=>{
-    const cand = candidateFromMode(mode);
-    if(cand) items.push(cand);
+    const cand=candidateFromMode(mode);
+    if(cand)items.push(cand);
   });
   shuffle(dataItems).slice(2).forEach(i=>items.push(i));
 
   const deduped=[];
   for(const item of items){
-    if(!item||!item.t) continue;
+    if(!item||!item.t)continue;
     const prev=deduped[deduped.length-1];
-    if(prev && lineSimilarity(prev.t,item.t)>0.44) continue;
+    if(prev&&lineSimilarity(prev.t,item.t)>0.44)continue;
     deduped.push(item);
     rememberLine(item);
   }
 
   const track=document.getElementById('bar-track');
-  if(!track) return;
-  const html = deduped.map(i=>`<span class="bar-item${i.live?' live':i.dim?' dim':''}">${i.t}</span><span class="bar-sep"> · </span>`).join('');
-  track.innerHTML = html + html;
+  if(!track)return;
+  const html=deduped.map(i=>`<span class="bar-item${i.live?' live':i.dim?' dim':''}">${i.t}</span><span class="bar-sep"> · </span>`).join('');
+  track.innerHTML=html+html;
 
   requestAnimationFrame(()=>{
-    const fullW = track.scrollWidth/2;
-    const speed = 120;
-    const dur = fullW/speed;
-    track.style.animationDuration = `${dur}s`;
+    const fullW=track.scrollWidth/2;
+    const speed=120;
+    const dur=fullW/speed;
+    track.style.animationDuration=`${dur}s`;
   });
 }
 function updateClock(){
-  const now=new Date(), h=now.getHours(), disp=h%12||12, ampm=h>=12?'PM':'AM';
-  document.getElementById('clock').textContent = `${disp}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${ampm}`;
+  const now=new Date(),h=now.getHours(),disp=h%12||12,ampm=h>=12?'PM':'AM';
+  document.getElementById('clock').textContent=`${disp}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${ampm}`;
   const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  document.getElementById('bar-date').textContent = `${M[now.getMonth()]} ${now.getDate()}`;
+  document.getElementById('bar-date').textContent=`${M[now.getMonth()]} ${now.getDate()}`;
   checkMilestones(now);
   updateWOI(now);
 }
 function checkMilestones(now){
   const el=Math.floor((now-S.sessionStart)/60000);
   MILESTONES.forEach(m=>{
-    if(el>=m.min && !S.milestones.has(m.min)){
+    if(el>=m.min&&!S.milestones.has(m.min)){
       S.milestones.add(m.min);
       setTimeout(()=>{
-        if(S.centerBusy) return;
-        document.getElementById('ms-text').textContent = m.text;
+        if(S.centerBusy)return;
+        document.getElementById('ms-text').textContent=m.text;
         showC(document.getElementById('milestone'),6000);
       },3000);
     }
@@ -778,8 +758,7 @@ function checkMilestones(now){
 }
 function updateWOI(now){
   const times=SunCalc.getTimes(now,LAT,LON);
-  const msr=(times.sunrise-now)/60000, mss=(times.sunset-now)/60000, h=now.getHours(), el=document.getElementById('window-interest');
-
+  const msr=(times.sunrise-now)/60000,mss=(times.sunset-now)/60000,h=now.getHours(),el=document.getElementById('window-interest');
   function set(ey,main,sub,count){
     document.getElementById('wi-eyebrow').textContent=ey;
     document.getElementById('wi-main').textContent=main;
@@ -787,7 +766,6 @@ function updateWOI(now){
     document.getElementById('wi-count').textContent=count;
     el.classList.add('active');
   }
-
   if(h>=5&&h<8&&msr<10){set('Peak Window','Dawn — active','Most active period of the morning','');return;}
   if(h>=17&&h<20&&mss>-30&&mss<20){set('Peak Window','Dusk — active','Most active period of the day','');return;}
   if(msr>0&&msr<40){const m=Math.floor(msr),s=Math.floor((msr-m)*60);set('Dawn Window','Light opening','Things usually change at first light',`${m}:${pad(s)}`);return;}
@@ -796,21 +774,19 @@ function updateWOI(now){
 }
 async function updateWeather(){
   try{
-    const [wr,aqr] = await Promise.all([
+    const [wr,aqr]=await Promise.all([
       fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,wind_speed_10m,wind_direction_10m,pressure_msl,cloud_cover,weather_code&hourly=temperature_2m,weather_code,precipitation_probability,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FDetroit&forecast_days=1`),
       fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=us_aqi,pm10,pm2_5,ozone&timezone=America%2FDetroit`)
     ]);
-    const d=await wr.json(), c=d.current;
+    const d=await wr.json(),c=d.current;
     S.weather=c;
     S.pressureTrend.push({t:Date.now(),p:c.pressure_msl});
-    if(S.pressureTrend.length>8) S.pressureTrend.shift();
+    if(S.pressureTrend.length>8)S.pressureTrend.shift();
     S.forecast=parseFc(d.hourly);
-
     try{
       const aq=await aqr.json();
-      if(aq&&aq.current) S.air=aq.current;
+      if(aq&&aq.current)S.air=aq.current;
     }catch(e){}
-
     updateMemory();
     buildMarquee();
   }catch(e){
@@ -834,9 +810,9 @@ async function updateNOAA(){
   }catch(e){}
 }
 async function hydrateElder(){
-  if(!S.weather) return;
+  if(!S.weather)return;
   try{
-    const ctx = {
+    const ctx={
       location:'Higgins Lake, Roscommon County, Michigan',
       period:period(),
       season:season(),
@@ -849,20 +825,21 @@ async function hydrateElder(){
       },
       forecast:(S.forecast||[]).slice(0,4),
       phenology:phenNow().map(p=>p.n).slice(0,2),
-      recent_lines:S.lineHistory.slice(-30),
+      recent_lines:S.lineHistory.slice(-40),
       memory_callbacks:(S.memory.callbacks||[]).slice(-6).map(c=>c.text)
     };
 
-    const r = await fetch(ELDER_ENDPOINT,{
+    const r=await fetch(ELDER_ENDPOINT,{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(ctx)
     });
 
-    if(!r.ok) throw new Error(r.status);
-    const data = await r.json();
-    if(Array.isArray(data.lines) && data.lines.length){
-      S.elderPool = normalizeElderLines(data.lines);
+    if(!r.ok)throw new Error(r.status);
+    const data=await r.json();
+    if(Array.isArray(data.lines)&&data.lines.length){
+      S.elderPool=normalizeElderLines(data.lines);
+      buildMarquee();
     }
   }catch(e){
     console.warn('elder fallback',e);
@@ -872,7 +849,7 @@ async function hydrateElder(){
 /* INIT */
 scaleOverlay();
 window.addEventListener('resize',scaleOverlay);
-if(window.location.search.includes('debug')) document.body.classList.add('debug');
+if(window.location.search.includes('debug'))document.body.classList.add('debug');
 
 updateClock();
 setInterval(updateClock,1000);
