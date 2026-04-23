@@ -283,16 +283,12 @@ const TIME_LOCAL_LINES = {
 
 const FIELD_JOURNAL_LINES = {
   all:[
-    'Still.',
-    'Nothing yet.',
-    'Quiet again.',
-    'Same.',
-    'Not much.',
-    'Hard to tell.',
-    'Could stay like this.',
-    'Nothing obvious right now.',
-    'The place feels between things.',
-    'Nothing much changed.'
+    'Nothing changed yet.',
+    'Still not revealing much.',
+    'Feels like it\'s between shifts.',
+    'Not showing anything obvious right now.',
+    'The place isn\'t giving much away right now.',
+    'Whatever was happening earlier has paused.'
   ],
   dawn:[
     'First light always makes the woods look more settled than they are.',
@@ -658,9 +654,11 @@ function lifestylePool(){
 }
 function quietNarrativePool(){
   const elder=normalizeElderLines(S.elderPool).map(x=>x.text).filter(lineFitsCurrentContext);
+  // AI lines are the primary source — only mix in fallback seasonals if pool is thin
+  if(elder.length>=3)return elder;
   const seasonals=(FIELD_JOURNAL_LINES[period()]||[]).concat(FIELD_JOURNAL_LINES.all||[]);
   const lessons=Math.random()<0.35?lessonPool():[];
-  return elder.length?elder.concat(seasonals,lessons):seasonals.concat(lessons);
+  return elder.concat(seasonals,lessons);
 }
 function extraDataItems(){
   const items=[];
@@ -671,25 +669,13 @@ function extraDataItems(){
   return items;
 }
 function candidateFromMode(mode){
-  const now=Date.now();
-  const forceStrong=now-S.lastStrongLineAt>5*60*1000;
-
-  if(mode==='field_observation'&&forceStrong){
-    const strongPool=['Still.','Nothing obvious right now.','Same as earlier.','Could stay like this.'].filter(lineFitsCurrentContext);
-    const strong=strongPool.find(t=>!looksRepetitive(t,mode));
-    if(strong){
-      S.lastStrongLineAt=now;
-      return{t:strong,mode,live:true};
-    }
-  }
-
   let pool=[];
   if(mode==='field_observation')pool=fieldObservationPool();
-  if(mode==='behavior_insight')pool=behaviorInsightPool();
+  if(mode==='behavior_insight'){const bp=behaviorInsightPool();if(!bp||!bp.length)return null;pool=bp;}
   if(mode==='northern_context')pool=northernContextPool();
   if(mode==='lifestyle_trigger')pool=lifestylePool();
   if(mode==='quiet_narrative')pool=quietNarrativePool();
-
+  if(!pool||!pool.length)return null;
   pool=shuffle(pool).filter(lineFitsCurrentContext);
   for(const raw of pool){
     const t=dialNarrator(raw);
@@ -707,12 +693,11 @@ function buildMarquee(){
     items.push({t:`Wind ${S.weather.wind_speed_10m<1?'calm':`${S.weather.wind_speed_10m.toFixed(0)} mph ${compassDir(S.weather.wind_direction_10m)}`}.`,type:'wind'});
   }
 
-  shuffle(dataItems).slice(0,2).forEach(i=>items.push(i));
-  modeOrder(10).forEach(mode=>{
+  shuffle(dataItems).slice(0,1).forEach(i=>items.push(i));
+  modeOrder(6).forEach(mode=>{
     const cand=candidateFromMode(mode);
     if(cand)items.push(cand);
   });
-  shuffle(dataItems).slice(2).forEach(i=>items.push(i));
 
   const deduped=[];
   for(const item of items){
@@ -862,7 +847,7 @@ setInterval(updateNOAA,15*60*1000);
 
 setTimeout(()=>{
   hydrateElder();
-  setInterval(hydrateElder,3*60*1000);
+  setInterval(hydrateElder,2*60*1000);
 },10000);
 
 buildMarquee();
