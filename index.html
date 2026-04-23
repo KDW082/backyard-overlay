@@ -10,12 +10,14 @@
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 html{width:100%;height:100%;}
-body{width:1920px;height:1080px;background:transparent;overflow:hidden;font-family:'DM Sans',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;color:#fff;transform-origin:top left;}
+body{
+  width:1920px;height:1080px;background:transparent;overflow:hidden;
+  font-family:'DM Sans',-apple-system,sans-serif;-webkit-font-smoothing:antialiased;
+  color:#fff;transform-origin:top left;
+}
 body.debug{background:#091523!important;}
 :root{
-  --blue:rgba(0,56,118,0.82);
   --blue-d:rgba(0,34,80,0.90);
-  --blue-l:rgba(10,75,155,0.75);
   --border:rgba(110,165,255,0.22);
   --border-hi:rgba(150,195,255,0.32);
   --blur:blur(20px) saturate(1.5);
@@ -24,167 +26,114 @@ body.debug{background:#091523!important;}
   --w9:rgba(255,255,255,0.90);
   --w7:rgba(255,255,255,0.70);
   --w5:rgba(255,255,255,0.50);
-  --w3:rgba(255,255,255,0.30);
   --gold:rgb(228,182,68);
   --gold2:rgba(228,182,68,0.65);
-  --rare:rgb(72,198,138);
   --ts:0 2px 14px rgba(0,0,0,0.75),0 1px 3px rgba(0,0,0,0.95);
-  --ts2:0 2px 20px rgba(0,0,0,0.95),0 1px 4px rgba(0,0,0,1);
 }
 
-/* ── TOP BAR ──────────────────────────── */
-.top-bar{
+/* TOP BAR */
+.bar{
   position:absolute;top:18px;left:20px;right:20px;height:96px;
   background:var(--blue-d);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   border:1px solid var(--border-hi);border-radius:var(--r);
-  display:flex;align-items:center;justify-content:space-between;
-  padding:0 36px;z-index:10;
+  display:flex;align-items:stretch;z-index:10;overflow:hidden;
   box-shadow:0 4px 36px rgba(0,0,0,0.40),inset 0 1px 0 rgba(150,195,255,0.15);
 }
-.tb-name{font-family:'DM Serif Display',Georgia,serif;font-style:italic;font-size:48px;color:var(--w);text-shadow:var(--ts);line-height:1;}
-.tb-sub{display:none;}
-.tb-center{display:flex;align-items:center;gap:10px;}
-.tb-seasonal{display:none;}
-.led{display:flex;align-items:center;gap:10px;font-size:26px;font-weight:500;letter-spacing:0.10em;text-transform:uppercase;color:var(--w5);}
-.led .dot{width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px rgba(228,182,68,0.8);animation:pulse 4s ease-in-out infinite;flex-shrink:0;}
-.led.alert .dot{background:rgb(215,60,42);box-shadow:0 0 12px rgba(215,60,42,0.9);animation:pf 0.8s ease-in-out infinite;}
-@keyframes pulse{0%,100%{opacity:0.22}50%{opacity:1}}
-@keyframes pf{0%,100%{opacity:0.5}50%{opacity:1}}
-.tb-clock{font-size:36px;font-weight:400;color:var(--w);font-variant-numeric:tabular-nums;text-shadow:var(--ts);line-height:1.1;letter-spacing:0.02em;}
-.tb-weather{font-size:24px;font-weight:600;color:var(--w9);text-shadow:var(--ts);letter-spacing:0.02em;margin-top:1px;}
-.tb-date{font-size:20px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:var(--w5);text-shadow:var(--ts);margin-top:1px;}
-.tb-right{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;}
+.bar-title{
+  font-family:'DM Serif Display',Georgia,serif;font-style:italic;font-size:42px;
+  color:var(--w);text-shadow:var(--ts);
+  padding:0 32px;white-space:nowrap;flex-shrink:0;
+  border-right:1px solid var(--border);
+  display:flex;align-items:center;
+}
+.bar-scroll{
+  flex:1;overflow:hidden;position:relative;display:flex;align-items:center;
+}
+.bar-track{
+  display:flex;align-items:center;white-space:nowrap;
+  position:absolute;left:0;
+  animation:marquee 120s linear infinite;
+  will-change:transform;
+}
+@keyframes marquee{
+  0%{transform:translateX(0);}
+  100%{transform:translateX(-50%);}
+}
+.bar-item{
+  font-size:28px;font-weight:500;color:var(--w9);
+  letter-spacing:0.02em;padding:0 44px;text-shadow:var(--ts);flex-shrink:0;
+}
+.bar-item.live{color:var(--w9);font-weight:500;opacity:1;}
+.bar-item.dim{color:var(--w9);font-weight:500;font-style:italic;opacity:.62;}
+.bar-sep{color:rgba(150,195,255,0.30);padding:0 2px;}
+.bar-time{
+  padding:0 28px;flex-shrink:0;text-align:right;
+  border-left:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:flex-end;justify-content:center;
+}
+.bar-clock{
+  font-size:34px;font-weight:400;color:var(--w);
+  font-variant-numeric:tabular-nums;text-shadow:var(--ts);line-height:1.1;letter-spacing:0.02em;
+}
+.bar-date{
+  font-size:20px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;
+  color:var(--w5);text-shadow:var(--ts);margin-top:3px;
+}
 
-.noaa-bar{position:absolute;top:126px;left:20px;right:20px;background:rgba(195,50,28,0.22);border:1px solid rgba(195,50,28,0.36);border-radius:var(--r-sm);padding:8px 30px;display:none;align-items:center;gap:14px;z-index:10;}
+/* NOAA */
+.noaa-bar{
+  position:absolute;top:126px;left:20px;right:20px;
+  background:rgba(195,50,28,0.22);border:1px solid rgba(195,50,28,0.36);
+  border-radius:var(--r-sm);padding:8px 30px;display:none;align-items:center;gap:14px;z-index:10;
+}
 .noaa-bar.active{display:flex;}
 .nb-lbl{font-size:28px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(218,76,58,0.82);}
 .nb-txt{font-size:32px;font-weight:700;color:rgb(228,82,62);}
 
-/* ── LEFT PANEL ──────────────────────── */
-.left-panel{
-  position:absolute;top:132px;left:20px;width:460px;
-  background:var(--blue);
-  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
-  border:1px solid var(--border);border-radius:var(--r);
-  padding:24px 28px;z-index:8;
-  display:flex;flex-direction:column;gap:20px;
-  box-shadow:0 4px 28px rgba(0,0,0,0.28);
+/* WINDOW OF INTEREST */
+.window-interest{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);
+  text-align:center;opacity:0;transition:opacity 1.8s ease;pointer-events:none;z-index:20;
 }
-.db-lbl{font-size:22px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--w5);text-shadow:var(--ts);margin-bottom:4px;}
-.db-val{font-size:32px;font-weight:700;color:var(--w);text-shadow:var(--ts);line-height:1.1;}
-.db-sub{font-size:26px;font-weight:400;color:var(--w7);text-shadow:var(--ts);margin-top:2px;letter-spacing:0.02em;}
-
-/* ── RIGHT PANEL ─────────────────────── */
-.right-panel{
-  position:absolute;top:132px;right:20px;width:460px;
-  background:var(--blue);
-  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
-  border:1px solid var(--border);border-radius:var(--r);
-  padding:24px 28px;z-index:8;
-  display:flex;flex-direction:column;gap:20px;
-  box-shadow:0 4px 28px rgba(0,0,0,0.28);
-}
-.species-list{display:flex;flex-direction:column;gap:4px;}
-.sp{font-size:28px;font-weight:500;color:var(--w9);text-shadow:var(--ts);line-height:1.3;}
-.sp.new{color:var(--gold);font-weight:700;}
-
-/* ── WINDOW OF INTEREST ──────────────── */
-.window-interest{position:absolute;top:50%;left:50%;transform:translate(-50%,-58%);text-align:center;opacity:0;transition:opacity 1.8s ease;pointer-events:none;z-index:20;}
 .window-interest.active{opacity:1;}
 .wi-ey{font-size:28px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);text-shadow:var(--ts);margin-bottom:12px;}
-.wi-main{font-family:'DM Serif Display',Georgia,serif;font-size:64px;font-style:italic;font-weight:400;color:var(--w);line-height:1.1;text-shadow:0 2px 28px rgba(0,0,0,1),0 0 70px rgba(0,0,0,0.95);}
-.wi-sub{font-size:28px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--w7);text-shadow:var(--ts);margin-top:12px;}
+.wi-main{
+  font-family:'DM Serif Display',Georgia,serif;font-size:64px;font-style:italic;font-weight:400;
+  color:var(--w);line-height:1.1;text-shadow:0 2px 28px rgba(0,0,0,1),0 0 70px rgba(0,0,0,0.95);
+}
+.wi-sub{font-size:28px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:rgba(255,255,255,.75);text-shadow:var(--ts);margin-top:12px;}
 .wi-count{font-size:46px;font-weight:300;color:var(--gold);text-shadow:var(--ts);margin-top:8px;font-variant-numeric:tabular-nums;}
 
-/* ── JOURNAL ─────────────────────────── */
-.journal-entry{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:760px;text-align:center;opacity:0;pointer-events:none;transition:opacity 1.2s ease;z-index:18;}
-.journal-entry.active{opacity:1;}
-.je-text{font-size:36px;font-weight:400;color:var(--w9);line-height:1.45;text-shadow:var(--ts2);background:var(--blue-d);border:1px solid var(--border);border-radius:var(--r);padding:30px 40px;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
-.je-attr{font-size:26px;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--w3);text-shadow:var(--ts);margin-top:12px;}
-
-/* ── MILESTONE ───────────────────────── */
-.milestone{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;opacity:0;pointer-events:none;transition:opacity 0.8s ease;z-index:19;}
+/* MILESTONE */
+.milestone{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  text-align:center;opacity:0;pointer-events:none;transition:opacity 0.8s ease;z-index:19;
+}
 .milestone.active{opacity:1;}
-.ms-text{font-size:30px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--w9);text-shadow:var(--ts);background:var(--blue-d);border:1px solid var(--border);border-radius:var(--r-sm);padding:14px 30px;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
-
-/* ── RARE BANNER ─────────────────────── */
-.rare-banner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:840px;text-align:center;background:var(--blue-d);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(72,198,138,0.22);border-top:2px solid rgba(72,198,138,0.52);border-radius:var(--r);padding:42px 68px 38px;opacity:0;pointer-events:none;transition:opacity 0.5s ease;z-index:22;box-shadow:0 8px 56px rgba(0,0,0,0.55);}
-.rare-banner.active{opacity:1;}
-.rb-cat{font-size:28px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:rgba(72,198,138,0.72);text-shadow:var(--ts);margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid rgba(72,198,138,0.15);}
-.rb-main{font-size:38px;font-weight:700;color:var(--w);line-height:1.4;text-shadow:var(--ts);}
-.rb-sub{font-size:28px;font-weight:400;color:var(--w7);margin-top:12px;line-height:1.5;text-shadow:var(--ts);}
-.rb-ts{font-size:26px;font-weight:500;letter-spacing:0.14em;text-transform:uppercase;color:rgba(72,198,138,0.58);margin-top:20px;}
-
-/* ── BOTTOM BAR ──────────────────────── */
-.bottom-bar{
-  position:absolute;bottom:18px;left:20px;right:20px;
-  background:var(--blue-d);
-  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
-  border:1px solid var(--border-hi);border-radius:var(--r);
-  z-index:10;overflow:hidden;
-  box-shadow:0 -4px 36px rgba(0,0,0,0.40),inset 0 1px 0 rgba(150,195,255,0.12);
+.ms-text{
+  font-size:30px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:var(--w9);
+  text-shadow:var(--ts);background:var(--blue-d);border:1px solid var(--border);border-radius:var(--r-sm);
+  padding:14px 30px;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
 }
-.bottom-content{
-  display:grid;grid-template-columns:1fr auto;
-  gap:0;padding:28px 36px 22px;
-  border-bottom:1px solid rgba(255,255,255,0.09);
-}
-.sm-state{font-size:52px;font-weight:700;color:var(--w);text-shadow:var(--ts);line-height:1.1;letter-spacing:0.01em;}
-.sm-state.s-build{color:var(--gold);}
-.sm-state.s-active{color:var(--w);}
-.sm-state.s-lull{color:var(--w7);}
-.sm-state.s-quiet{color:var(--w7);}
-.sm-state.s-transition{color:var(--gold);}
-.sm-state.s-drama{color:var(--gold);}
-.sm-state.s-night{color:rgba(155,195,235,0.92);}
-.sm-state.rare{color:var(--rare);}
-.sm-meaning{font-size:32px;font-weight:500;color:var(--w7);text-shadow:var(--ts);margin-top:8px;line-height:1.4;max-width:540px;}
-.sm-ago{font-size:28px;font-weight:400;color:var(--w3);text-shadow:var(--ts);margin-top:9px;font-variant-numeric:tabular-nums;letter-spacing:0.04em;}
-.elder-zone{text-align:center;padding:0 28px;}
-.eq-label{display:none;}
-.eq-quote{font-size:36px;font-weight:400;color:var(--w9);line-height:1.4;text-shadow:var(--ts);transition:opacity 1.4s ease;}
-.eq-quote.fade{opacity:0;}
-.cond-zone{text-align:right;}
-.cr{display:flex;justify-content:flex-end;align-items:baseline;gap:9px;margin-bottom:10px;}
-.cr-lbl{font-size:26px;font-weight:600;letter-spacing:0.10em;text-transform:uppercase;color:var(--w5);text-shadow:var(--ts);}
-.cr-val{font-size:32px;font-weight:700;color:var(--w9);text-shadow:var(--ts);font-variant-numeric:tabular-nums;}
-
-/* ── TICKER ──────────────────────────── */
-.ticker-strip{height:56px;overflow:hidden;display:flex;align-items:center;background:rgba(0,28,70,0.45);}
-.ticker-track{display:flex;white-space:nowrap;animation:tick 90s linear infinite;will-change:transform;}
-@keyframes tick{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
-.ticker-item{font-size:28px;font-weight:600;color:rgba(255,255,255,0.85);letter-spacing:0.06em;padding:0 56px;text-shadow:var(--ts);}
-.ticker-sep{color:rgba(255,255,255,0.28);}
 </style>
 </head>
 <body>
 
-<div class="top-bar">
-  <div>
-    <div class="tb-name">Northern Michigan's Backyard</div>
+<div class="bar">
+  <div class="bar-title">Northern Michigan's Backyard</div>
+  <div class="bar-scroll">
+    <div class="bar-track" id="bar-track"></div>
   </div>
-  <div class="tb-center"></div>
-  <div class="tb-right">
-    <div class="tb-clock" id="clock">—</div>
-    <div class="tb-date" id="tb-date"></div>
+  <div class="bar-time">
+    <div class="bar-clock" id="clock">—</div>
+    <div class="bar-date" id="bar-date"></div>
   </div>
 </div>
 
 <div class="noaa-bar" id="noaa-bar">
   <span class="nb-lbl">NWS Advisory</span>
   <span class="nb-txt" id="noaa-text">—</span>
-</div>
-
-<div class="left-panel">
-  <div><div class="db-lbl">Conditions</div><div class="db-val" id="weather-val">—</div><div class="db-sub" id="weather-sub">—</div></div>
-  <div><div class="db-lbl">Lunar Phase</div><div class="db-val" id="moon-val">—</div><div class="db-sub" id="moon-sub">—</div></div>
-  <div><div class="db-lbl">Barometric Pressure</div><div class="db-val" id="pressure-val">—</div><div class="db-sub" id="pressure-sub">—</div></div>
-  <div><div class="db-lbl">Wind</div><div class="db-val" id="wind-val">—</div><div class="db-sub" id="wind-sub">—</div></div>
-</div>
-
-<div class="right-panel">
-  <div><div class="db-lbl">Species · Observed Nearby</div><div class="species-list" id="species-list"></div></div>
 </div>
 
 <div class="window-interest" id="window-interest">
@@ -194,168 +143,752 @@ body.debug{background:#091523!important;}
   <div class="wi-count" id="wi-count"></div>
 </div>
 
-<div class="journal-entry" id="journal-entry">
-  <div class="je-text" id="je-text">—</div>
-  <div class="je-attr" id="je-attr">—</div>
-</div>
-
 <div class="milestone" id="milestone">
   <div class="ms-text" id="ms-text">—</div>
 </div>
 
-<div class="rare-banner" id="rare-banner">
-  <div class="rb-cat" id="rb-cat">—</div>
-  <div class="rb-main" id="rb-main">—</div>
-  <div class="rb-sub" id="rb-sub">—</div>
-  <div class="rb-ts" id="rb-ts">—</div>
-</div>
-
-<div class="bottom-bar">
-  <div class="bottom-content">
-    <div class="elder-zone" style="text-align:left;padding:0;">
-      <div class="eq-quote" id="eq-quote">—</div>
-    </div>
-    <div class="cond-zone">
-      <span id="c-temp" style="display:none"></span>
-      <span id="c-sky" style="display:none"></span>
-    </div>
-  </div>
-  <div class="ticker-strip">
-    <div class="ticker-track" id="ticker-track"></div>
-  </div>
-</div>
-
 <script>
-const LAT=44.48,LON=-84.72;
-const ELDER_ENDPOINT='/.netlify/functions/elder-voice';
-const NOAA_ZONE='MIZ037';
-const S={weather:null,forecast:[],elderPool:[],lastElderIdx:-1,sessionStart:Date.now(),eventCount:0,lastEventAt:null,lastEventLabel:null,lastEventState:null,feederQuietSince:Date.now()-60000*(15+Math.floor(Math.random()*30)),feederActive:false,pressureTrend:[],rareLog:[],milestones:new Set(),centerBusy:false};
-var MILESTONES=[{min:10,text:'10 minutes of continuous observation'},{min:30,text:'30 minutes · most viewers have already left'},{min:60,text:'One hour · the patterns start to become visible'},{min:120,text:'Two hours · you are learning this forest'},{min:180,text:'Three hours · experienced viewer'}];
-var PHENOLOGY=[{s:[3,1],e:[3,21],n:'Ice-out window open · Roscommon County'},{s:[4,1],e:[4,25],n:'Woodcock display flights · dawn and dusk'},{s:[4,10],e:[4,25],n:'Loon return window · Higgins Lake avg Apr 18'},{s:[4,20],e:[5,10],n:'Spring warbler migration peak · Roscommon County'},{s:[5,1],e:[5,20],n:'Morel season · mixed hardwood and pine'},{s:[5,25],e:[6,15],n:'Firefly first appearance · avg June 9'},{s:[6,15],e:[7,10],n:'Fawn season · does with newborns · high alert'},{s:[8,1],e:[9,1],n:'Perseid window · peak Aug 12 · best 2–4am'},{s:[8,20],e:[9,20],n:'Early color change · swamp maples first'},{s:[9,1],e:[10,1],n:'Hawk migration corridor active'},{s:[9,15],e:[10,15],n:'Peak fall color · Roscommon County'},{s:[10,20],e:[11,20],n:'Rut peak · maximum deer movement · dawn and dusk'},{s:[12,10],e:[1,10],n:'Ice formation begins · bays freeze before basins'},{s:[1,15],e:[2,28],n:'Deep winter · chickadee and nuthatch primary visitors'}];
+const LAT = 44.48;
+const LON = -84.72;
+const ELDER_ENDPOINT = '/.netlify/functions/elder-voice';
+const NOAA_ZONE = 'MIZ037';
+const MODE_WEIGHTS = {
+  field_observation: 40,
+  behavior_insight: 20,
+  northern_context: 15,
+  lifestyle_trigger: 15,
+  quiet_narrative: 10
+};
+
+const S = {
+  weather:null,
+  forecast:[],
+  air:null,
+  elderPool:[],
+  sessionStart:Date.now(),
+  pressureTrend:[],
+  milestones:new Set(),
+  centerBusy:false,
+  lineHistory:[],
+  modeHistory:[],
+  recentOpeners:[],
+  lastStrongLineAt:0,
+  memory:{
+    windDir:null,
+    windSpeed:null,
+    pressureTrend:null,
+    weatherCode:null,
+    temp:null,
+    lastWindShiftAt:null,
+    lastPressureShiftAt:null,
+    lastSkyShiftAt:null,
+    lastTempShiftAt:null,
+    callbacks:[]
+  }
+};
+
+const MILESTONES = [
+  {min:10,text:'10 minutes of continuous observation'},
+  {min:30,text:'30 minutes · most viewers have already left'},
+  {min:60,text:'One hour · the patterns start to become visible'},
+  {min:120,text:'Two hours · you are learning this place'},
+  {min:180,text:'Three hours · experienced viewer'}
+];
+
+const PHENOLOGY = [
+  {s:[3,1],e:[3,21],n:'Ice-out window open in Roscommon County.'},
+  {s:[4,1],e:[4,25],n:'Woodcock display flights run at dawn and dusk this time of year.'},
+  {s:[4,10],e:[4,25],n:'Loon return window is usually open around now.'},
+  {s:[4,20],e:[5,10],n:'Spring warbler migration is near peak in this stretch.'},
+  {s:[5,1],e:[5,20],n:'Morel season tends to open in mixed hardwood and pine.'},
+  {s:[5,25],e:[6,15],n:'Fireflies usually start showing up around early June.'},
+  {s:[6,15],e:[7,10],n:'Fawn season is usually active now.'},
+  {s:[8,1],e:[9,1],n:'Perseid window opens this month. Best after midnight.'},
+  {s:[8,20],e:[9,20],n:'Early color usually starts in the swamp maples first.'},
+  {s:[9,1],e:[10,1],n:'Hawk migration usually gets moving in September.'},
+  {s:[9,15],e:[10,15],n:'Peak fall color usually lives in this window.'},
+  {s:[10,20],e:[11,20],n:'Rut season tends to sharpen the edges at dawn and dusk.'},
+  {s:[12,10],e:[1,10],n:'Ice formation usually starts in the bays before the basins.'},
+  {s:[1,15],e:[2,28],n:'Deep winter usually leaves chickadees and nuthatches doing most of the visible work.'}
+];
+
+const REGIONAL_CONTEXT = [
+  'Grayling, Houghton Lake, and Roscommon all sit inside half an hour from here.',
+  'Traverse City, Petoskey, and Mackinac are day trips, not quick runs.',
+  'This spot sits in the woods — Higgins Lake is under a mile away.',
+  'Grayling trails, Roscommon shops, and Houghton Lake access are all easy from here.',
+  'Close towns do the daily work around here. The bigger names take more planning.',
+  'You can run local without feeling stuck, and still reach the longer-name spots when you want to.'
+];
+
+const DESTINATION_LINES = [
+  'Grayling is close — trails, river access, and downtown are easy from here.',
+  'Roscommon and Houghton Lake stay in the quick-run zone.',
+  'Traverse City runs west — better as a full day than a quick stop.',
+  'Petoskey is a longer northbound run if you want shops, harbor, and a change of pace.',
+  'Mackinac is worth the day. Not the kind of place you just pop over to.'
+];
+
+const LIFESTYLE_LINES = {
+  spring:[
+    'Good morning for the lake.',
+    'Spring out here plays better when the day stays loose.',
+    'Shoulder season keeps the region open without the heavier summer pace.'
+  ],
+  summer:[
+    'Water’s probably still right now.',
+    'Summer plays best when the day splits — water first, woods later.',
+    'Boating, golf, trail runs, and a fire after dark all fit the same day.'
+  ],
+  autumn:[
+    'Cool evening. Fire would make sense.',
+    'Autumn traffic thins and the woods take the lead again.',
+    'Fall up here rewards people who actually want to be outside.'
+  ],
+  winter:[
+    'Cold tonight. Sound carries more.',
+    'Winter shifts the draw from water to woods, trails, and ski runs.',
+    'Cold-clear days make the whole area feel sharper and less crowded.'
+  ]
+};
+
+const TIME_LOCAL_LINES = {
+  dawn:[
+    'First light does most of the work out here.',
+    'Dawn usually makes the woods feel busier than they look.',
+    'This is the part of the morning where less can still mean more.'
+  ],
+  morning:[
+    'Morning settles slower under tree cover.',
+    'The place usually reads cleaner once the early edge wears off.',
+    'Mornings out here tend to open in layers.'
+  ],
+  midday:[
+    'Midday usually flattens things out.',
+    'This part of the day often goes quieter.',
+    'Midday is when you notice the place more than the motion.'
+  ],
+  afternoon:[
+    'Afternoon starts leaning toward evening once the light softens.',
+    'This is where the day either opens back up or shuts down early.',
+    'Afternoon usually tells you what dusk is going to do.'
+  ],
+  dusk:[
+    'Last light usually carries more tension.',
+    'Dusk is when even quiet stretches feel temporary.',
+    'This is the window where the place starts changing its mind.'
+  ],
+  night:[
+    'Night runs on different rules out here.',
+    'After dark, sound usually tells you more than sight.',
+    'Night settles in slow under the trees, then all at once.'
+  ]
+};
+
+const FIELD_JOURNAL_LINES = {
+  all:[
+    'Still.',
+    'Nothing yet.',
+    'Quiet again.',
+    'Same.',
+    'Not much.',
+    'Hard to tell.',
+    'Could stay like this.',
+    'Nothing obvious right now.',
+    'The place feels between things.',
+    'Nothing much changed.'
+  ],
+  dawn:[
+    'First light always makes the woods look more settled than they are.',
+    'This is when the edges start to matter.'
+  ],
+  morning:[
+    'The early rush is over. Now it gets harder to read.'
+  ],
+  midday:[
+    'Midday can look dead and still keep changing under it.'
+  ],
+  afternoon:[
+    'The whole place starts leaning toward dusk from here.'
+  ],
+  dusk:[
+    'Last light covers a lot until it doesn’t.',
+    'Stillness lies more at dusk.'
+  ],
+  night:[
+    'After dark, sound usually gets there first.'
+  ]
+};
 
 function pad(n){return String(n).padStart(2,'0');}
-function compassDir(d){return['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d/22.5)%16];}
-function fmtAgo(ms){const s=Math.floor(ms/1000);return s<60?`${s}s ago`:`${Math.floor(s/60)}m ${pad(s%60)}s ago`;}
-function period(){const h=new Date().getHours();if(h<5)return'night';if(h<8)return'dawn';if(h<12)return'morning';if(h<15)return'midday';if(h<19)return'afternoon';if(h<22)return'dusk';return'night';}
-function season(){const m=new Date().getMonth();if(m<2||m===11)return'winter';if(m<5)return'spring';if(m<8)return'summer';return'autumn';}
-function pTrend(){if(S.pressureTrend.length<2)return'stable';const d=S.pressureTrend[S.pressureTrend.length-1].p-S.pressureTrend[0].p;if(d>2)return'rising';if(d<-2)return'falling';return'stable';}
-function phenNow(){const now=new Date(),m=now.getMonth()+1,d=now.getDate();const n=(a,b)=>a*100+b,cur=n(m,d);return PHENOLOGY.filter(p=>{const s=n(p.s[0],p.s[1]),e=n(p.e[0],p.e[1]);return s<=e?cur>=s&&cur<=e:cur>=s||cur<=e;});}
-function showC(el,ms,cb){if(S.centerBusy)return false;S.centerBusy=true;el.classList.add('active');setTimeout(()=>{el.classList.remove('active');setTimeout(()=>{S.centerBusy=false;if(cb)cb();},1200);},ms);return true;}
-function scaleOverlay(){const sx=window.innerWidth/1920,sy=window.innerHeight/1080,sc=Math.min(sx,sy);document.body.style.transform=`scale(${sc})`;document.body.style.marginLeft=`${(window.innerWidth-1920*sc)/2}px`;document.body.style.marginTop=`${(window.innerHeight-1080*sc)/2}px`;}
-scaleOverlay();window.addEventListener('resize',scaleOverlay);
-if(window.location.search.includes('debug'))document.body.classList.add('debug');
+function shuffle(arr){return [...arr].sort(()=>Math.random()-0.5);}
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)];}
+function tokenize(s){return String(s).toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(Boolean);}
+function opener(s){return tokenize(s).slice(0,2).join(' ');}
+function period(){
+  const h = new Date().getHours();
+  if(h < 5) return 'night';
+  if(h < 8) return 'dawn';
+  if(h < 12) return 'morning';
+  if(h < 15) return 'midday';
+  if(h < 19) return 'afternoon';
+  if(h < 22) return 'dusk';
+  return 'night';
+}
+function season(){
+  const m = new Date().getMonth();
+  if(m < 2 || m === 11) return 'winter';
+  if(m < 5) return 'spring';
+  if(m < 8) return 'summer';
+  return 'autumn';
+}
+function compassDir(d){
+  return ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(d/22.5)%16];
+}
+function pTrend(){
+  if(S.pressureTrend.length < 2) return 'stable';
+  const d = S.pressureTrend[S.pressureTrend.length-1].p - S.pressureTrend[0].p;
+  if(d > 2) return 'rising';
+  if(d < -2) return 'falling';
+  return 'stable';
+}
+function phenNow(){
+  const now = new Date(), m = now.getMonth()+1, d = now.getDate();
+  const n = (a,b)=>a*100+b, cur=n(m,d);
+  return PHENOLOGY.filter(p=>{
+    const s=n(p.s[0],p.s[1]), e=n(p.e[0],p.e[1]);
+    return s<=e ? cur>=s && cur<=e : cur>=s || cur<=e;
+  });
+}
+function lineSimilarity(a,b){
+  const A=new Set(tokenize(a)), B=new Set(tokenize(b));
+  if(!A.size || !B.size) return 0;
+  let overlap=0; A.forEach(t=>{if(B.has(t)) overlap++;});
+  const j = overlap/(A.size+B.size-overlap);
+  const prefix = opener(a) && opener(a)===opener(b) ? 0.25 : 0;
+  const len = Math.abs(a.length-b.length)<8 ? 0.1 : 0;
+  return j + prefix + len;
+}
+function skyL(code,cloud){
+  if([0].includes(code)) return 'Clear';
+  if([1].includes(code)) return 'Mainly clear';
+  if([2].includes(code)) return 'Partly cloudy';
+  if([3].includes(code)) return 'Overcast';
+  if([45,48].includes(code)) return 'Fog';
+  if([51,53,55].includes(code)) return 'Drizzle';
+  if([61,63,65,80,81,82].includes(code)) return 'Rain';
+  if([71,73,75,77].includes(code)) return 'Snow';
+  if([95,96,99].includes(code)) return 'Thunderstorm';
+  return `${cloud}% cloud`;
+}
+function windL(mph){
+  if(mph<1) return 'No surface movement';
+  if(mph<5) return 'Barely perceptible';
+  if(mph<10) return 'Leaves stirring';
+  if(mph<15) return 'Small branches moving';
+  if(mph<20) return 'Canopy active';
+  return 'Sustained canopy motion';
+}
+function moonName(p){
+  if(p<0.03||p>0.97)return'New Moon';
+  if(p<0.22)return'Waxing Crescent';
+  if(p<0.28)return'First Quarter';
+  if(p<0.47)return'Waxing Gibbous';
+  if(p<0.53)return'Full Moon';
+  if(p<0.72)return'Waning Gibbous';
+  if(p<0.78)return'Last Quarter';
+  return'Waning Crescent';
+}
+function scaleOverlay(){
+  const sx=window.innerWidth/1920, sy=window.innerHeight/1080, sc=Math.min(sx,sy);
+  document.body.style.transform=`scale(${sc})`;
+  document.body.style.marginLeft=`${(window.innerWidth-1920*sc)/2}px`;
+  document.body.style.marginTop=`${(window.innerHeight-1080*sc)/2}px`;
+}
+function showC(el,ms,cb){
+  if(S.centerBusy) return false;
+  S.centerBusy=true;
+  el.classList.add('active');
+  setTimeout(()=>{
+    el.classList.remove('active');
+    setTimeout(()=>{
+      S.centerBusy=false;
+      if(cb) cb();
+    },1200);
+  },ms);
+  return true;
+}
+function rememberLine(item){
+  S.lineHistory.push(item.t);
+  if(S.lineHistory.length > 120) S.lineHistory.shift();
+  S.modeHistory.push(item.mode || item.type || 'misc');
+  if(S.modeHistory.length > 120) S.modeHistory.shift();
+  S.recentOpeners.push(opener(item.t));
+  if(S.recentOpeners.length > 40) S.recentOpeners.shift();
+}
+function normalizeElderLines(lines){
+  return (lines||[]).map(l=>{
+    if(typeof l === 'string') return {text:l,mode:'quiet_narrative'};
+    return {text:l.text || l.line || '', mode:l.mode || 'quiet_narrative'};
+  }).filter(x=>x.text);
+}
+function dialNarrator(text){
+  if(!text) return text;
+  let out = text.trim();
+  const kills = ['beautiful','amazing','perfect','magical','peaceful','serene','escape','getaway','experience'];
+  kills.forEach(w=>{
+    const r = new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}\\b`,'gi');
+    out = out.replace(r,'');
+  });
+  const swaps = [
+    [/\bstarting to\b/gi,'beginning to'],
+    [/\bholding at\b/gi,'sitting at'],
+    [/\bconditions like this\b/gi,'this setup'],
+    [/\bseasonal traffic\b/gi,'more traffic'],
+    [/\bshoreline\b/gi,'water']
+  ];
+  swaps.forEach(([a,b])=>out=out.replace(a,b));
+  out = out.replace(/\s+/g,' ').replace(/\s+([,.—])/g,'$1').trim();
+  if(out.length > 92){
+    const cut = out.lastIndexOf(' ',88);
+    out = out.slice(0, cut>55 ? cut : 88).trim();
+  }
+  if(out && !/[.!?]$/.test(out)) out += '.';
+  return out.charAt(0).toUpperCase() + out.slice(1);
+}
+function lineFitsCurrentContext(text){
+  const lc = String(text).toLowerCase();
+  const s = season();
+  const p = period();
 
+  const seasonConflicts = {
+    spring:['rut','fall color','deep winter','ski runs','fresh snow','ice formation','summer plays best'],
+    summer:['rut','fall color','deep winter','fresh snow','ski runs','ice formation','ice-out'],
+    autumn:['deep winter','fresh snow','ski runs','ice formation','spring warbler','ice-out','fawn season'],
+    winter:['dock coffee','boating','golf','fireflies','morel season','spring warbler','fawn season','fall color']
+  };
+
+  const periodConflicts = {
+    dawn:['midday','after dark','night runs','last light','dusk'],
+    morning:['after dark','night runs','last light','dusk'],
+    midday:['after dark','night runs','first light','dawn'],
+    afternoon:['after dark','night runs','first light','dawn'],
+    dusk:['first light','midday','morning settles'],
+    night:['first light','dock coffee','midday','afternoon starts']
+  };
+
+  if((seasonConflicts[s]||[]).some(k=>lc.includes(k))) return false;
+  if((periodConflicts[p]||[]).some(k=>lc.includes(k))) return false;
+  return true;
+}
+function looksRepetitive(text,mode){
+  const recent = S.lineHistory.slice(-40);
+  const badWords = ['beautiful','amazing','perfect','magical','peaceful','serene'];
+  const toks = tokenize(text);
+  if(toks.filter(t=>badWords.includes(t)).length>0) return true;
+  if(S.recentOpeners.slice(-16).includes(opener(text))) return true;
+  if(S.modeHistory.slice(-2).every(m=>m===mode)) return true;
+  if(!lineFitsCurrentContext(text)) return true;
+  return recent.some(r=>lineSimilarity(r,text) > 0.42);
+}
+function modeOrder(count){
+  const pool=[];
+  Object.entries(MODE_WEIGHTS).forEach(([k,v])=>{for(let i=0;i<v;i++) pool.push(k);});
+  const out=[];
+  while(out.length<count && pool.length){
+    let choice = pick(pool), tries=0;
+    while(out.length>=2 && out[out.length-1]===choice && out[out.length-2]===choice && tries<20){
+      choice = pick(pool); tries++;
+    }
+    out.push(choice);
+  }
+  return out;
+}
+function pressureMeaning(){
+  const tr = pTrend();
+  if(tr === 'falling') return 'Pressure dropped. Usually changes things.';
+  if(tr === 'rising') return 'Pressure came back some.';
+  return 'Pressure stayed level.';
+}
+function memoryCallbackPool(){
+  const now = Date.now();
+  return (S.memory.callbacks || [])
+    .filter(c => now - c.at > 20*60*1000)
+    .map(c => c.text);
+}
+function updateMemory(){
+  if(!S.weather) return;
+  const now = Date.now();
+  const currentPressureTrend = pTrend();
+
+  if(S.memory.windDir !== null){
+    const dirChanged = Math.abs(S.weather.wind_direction_10m - S.memory.windDir) > 35;
+    const speedChanged = Math.abs(S.weather.wind_speed_10m - S.memory.windSpeed) >= 4;
+    if(dirChanged || speedChanged){
+      S.memory.lastWindShiftAt = now;
+      S.memory.callbacks.push({type:'wind_shift',at:now,text:'Wind changed earlier. Never really settled.'});
+    }
+  }
+
+  if(S.memory.pressureTrend !== null && S.memory.pressureTrend !== currentPressureTrend){
+    S.memory.lastPressureShiftAt = now;
+    S.memory.callbacks.push({
+      type:'pressure_shift',
+      at:now,
+      text: currentPressureTrend === 'falling'
+        ? 'Pressure turned and stayed unsettled.'
+        : currentPressureTrend === 'rising'
+        ? 'Pressure recovered a bit.'
+        : 'Pressure leveled out.'
+    });
+  }
+
+  if(S.memory.weatherCode !== null && S.memory.weatherCode !== S.weather.weather_code){
+    S.memory.lastSkyShiftAt = now;
+    S.memory.callbacks.push({type:'sky_shift',at:now,text:'Sky changed since earlier.'});
+  }
+
+  if(S.memory.temp !== null && Math.abs(S.weather.temperature_2m - S.memory.temp) >= 5){
+    S.memory.lastTempShiftAt = now;
+    S.memory.callbacks.push({
+      type:'temp_shift',
+      at:now,
+      text: S.weather.temperature_2m > S.memory.temp
+        ? 'It warmed up a bit.'
+        : 'Temperature dropped off some.'
+    });
+  }
+
+  S.memory.windDir = S.weather.wind_direction_10m;
+  S.memory.windSpeed = S.weather.wind_speed_10m;
+  S.memory.pressureTrend = currentPressureTrend;
+  S.memory.weatherCode = S.weather.weather_code;
+  S.memory.temp = S.weather.temperature_2m;
+  S.memory.callbacks = S.memory.callbacks.filter(c => now-c.at < 3*60*60*1000).slice(-10);
+}
+function lessonPool(){
+  const out=[];
+  const p=period(), s=season();
+  if(S.weather){
+    if(S.weather.wind_speed_10m >= 10) out.push('Wind in the tops usually tells you more than the ground does.');
+    if([61,63,65,80,81,82].includes(S.weather.weather_code)) out.push('Rain usually pulls smaller movement tighter to cover.');
+    if(S.weather.temperature_2m <= 35) out.push('Cold air carries sound farther.');
+    if(S.weather.temperature_2m >= 75) out.push('Heat flattens the middle of the day first.');
+  }
+  if(p === 'dusk') out.push('Last light usually compresses things into a shorter window.');
+  if(p === 'night') out.push('After dark, sound usually reads the place faster than sight.');
+  if(s === 'autumn') out.push('In fall, edges matter more once light starts dropping.');
+  if(s === 'winter') out.push('Fresh cold makes small sound travel farther through the trees.');
+  return out;
+}
+function parseFc(h){
+  if(!h||!h.time) return [];
+  const now = new Date(), r=[];
+  for(let i=0;i<h.time.length && r.length<6;i++){
+    const t = new Date(h.time[i]);
+    if(t>now){
+      r.push({
+        hoursOut:Math.round((t-now)/3600000),
+        temp:h.temperature_2m[i],
+        code:h.weather_code[i],
+        precipProb:h.precipitation_probability[i],
+        wind:h.wind_speed_10m[i]
+      });
+    }
+  }
+  return r;
+}
+function fcInsight(){
+  const fc=S.forecast||[];
+  if(!fc.length || !S.weather) return null;
+  const rain=fc.find(h=>h.precipProb>50);
+  if(rain){
+    const l = rain.code>=95 ? 'Storm' : rain.code>=61 ? 'Rain' : 'Drizzle';
+    return `${l} looks more likely ${rain.hoursOut<=1?'soon':'later on'}.`;
+  }
+  const later = fc[Math.min(fc.length-1,3)];
+  if(later){
+    const drop=S.weather.temperature_2m-later.temp;
+    if(drop>8) return `Air drops about ${drop.toFixed(0)}° later.`;
+    if(drop<-8) return `Warms up about ${Math.abs(drop).toFixed(0)}° later.`;
+    if(later.wind-S.weather.wind_speed_10m>6) return 'Wind builds later.';
+  }
+  return null;
+}
+function airLabel(aqi){
+  if(aqi==null || Number.isNaN(aqi)) return null;
+  if(aqi<=50) return 'Air quality clear';
+  if(aqi<=100) return 'Air quality moderate';
+  if(aqi<=150) return 'Air quality rough for sensitive groups';
+  return 'Air quality degraded';
+}
+function skyNarrative(){
+  if(!S.weather) return [];
+  const code=S.weather.weather_code;
+  if([0,1].includes(code)) return ['Sky opened up for now.','Light is cleaner with the clouds off it.'];
+  if([2,3].includes(code)) return ['Flat sky. Harder to read things under it.','Cloud cover is doing most of the mood work right now.'];
+  if([45,48].includes(code)) return ['Fog shortens the scene.','The air is hiding more than usual.'];
+  if([61,63,65,80,81,82].includes(code)) return ['Rain changes the pace fast.','Wet weather pushes things tighter to cover.'];
+  if([71,73,75,77].includes(code)) return ['Snow changes the ground story fast.','Fresh snow makes every track matter more.'];
+  return [];
+}
+function fieldObservationPool(){
+  const out=[];
+  if(S.weather){
+    out.push(`Sitting at ${S.weather.temperature_2m.toFixed(0)}° with ${skyL(S.weather.weather_code,S.weather.cloud_cover).toLowerCase()} overhead.`);
+    out.push(`Wind ${S.weather.wind_speed_10m.toFixed(0)} mph ${compassDir(S.weather.wind_direction_10m)}.`);
+    out.push(`Pressure ${pTrend()} at ${(S.weather.pressure_msl*0.02953).toFixed(2)} inHg.`);
+    if(S.weather.wind_speed_10m<4) out.push('Not much on the ground. Tops are doing more.');
+    if(S.weather.wind_speed_10m>=4 && S.weather.wind_speed_10m<10) out.push('Leaves are moving enough to hide small shifts.');
+    if(S.weather.wind_speed_10m>=10) out.push('Canopy is busy enough to cover a lot.');
+  }
+  out.push(...skyNarrative());
+  out.push(...(TIME_LOCAL_LINES[period()]||[]));
+  return out;
+}
+function behaviorInsightPool(){
+  const out=[pressureMeaning()];
+  const fci=fcInsight();
+  if(fci) out.push(fci);
+  out.push(...memoryCallbackPool());
+  if(S.weather && S.weather.wind_speed_10m<6) out.push('Lower wind usually makes things easier to read.');
+  if(S.weather && S.weather.wind_speed_10m>12) out.push('Wind like this hides more than it shows.');
+  if(period()==='dawn' || period()==='dusk') out.push('This light window usually does more with less.');
+  if(period()==='midday') out.push('Midday usually flattens things unless weather shifts.');
+  return out;
+}
+function northernContextPool(){
+  return [...REGIONAL_CONTEXT, ...shuffle(DESTINATION_LINES).slice(0,4), ...phenNow().map(p=>p.n)];
+}
+function lifestylePool(){
+  return [
+    ...(LIFESTYLE_LINES[season()]||[]),
+    'Up here, being in the right spot saves more time than people expect.',
+    'Close towns matter more here than people think.',
+    'Some days the lake carries the plan. Some days the woods do.',
+    'Could sit here a while.'
+  ];
+}
+function quietNarrativePool(){
+  const elder = normalizeElderLines(S.elderPool).map(x=>x.text).filter(lineFitsCurrentContext);
+  const seasonals = (FIELD_JOURNAL_LINES[period()]||[]).concat(FIELD_JOURNAL_LINES.all||[]);
+  const lessons = Math.random() < 0.35 ? lessonPool() : [];
+  return elder.length ? elder.concat(seasonals, lessons) : seasonals.concat(lessons);
+}
+function extraDataItems(){
+  const items=[];
+  const moon=SunCalc.getMoonIllumination(new Date());
+  items.push({t:`${moonName(moon.phase)} · ${(moon.fraction*100).toFixed(0)}% illuminated.`,type:'astro'});
+  if(S.air&&S.air.us_aqi!=null) items.push({t:`AQI ${Math.round(S.air.us_aqi)} · ${airLabel(Math.round(S.air.us_aqi))}.`,type:'air'});
+  if(S.weather){
+    items.push({t:`Wind feel · ${windL(S.weather.wind_speed_10m)}.`,type:'windfeel'});
+  }
+  return items;
+}
+function candidateFromMode(mode){
+  const now = Date.now();
+  const forceStrong = now - S.lastStrongLineAt > (5*60*1000);
+
+  if(mode==='field_observation' && forceStrong){
+    const strongPool = [
+      'Still.',
+      'Nothing obvious right now.',
+      'Same as earlier.',
+      'Could stay like this.'
+    ].filter(lineFitsCurrentContext);
+    const strong = strongPool.find(t=>!looksRepetitive(t,mode));
+    if(strong){
+      S.lastStrongLineAt = now;
+      return {t:strong,mode,live:true};
+    }
+  }
+
+  let pool=[];
+  if(mode==='field_observation') pool=fieldObservationPool();
+  if(mode==='behavior_insight') pool=behaviorInsightPool();
+  if(mode==='northern_context') pool=northernContextPool();
+  if(mode==='lifestyle_trigger') pool=lifestylePool();
+  if(mode==='quiet_narrative') pool=quietNarrativePool();
+
+  pool = shuffle(pool).filter(lineFitsCurrentContext);
+  for(const raw of pool){
+    const t = dialNarrator(raw);
+    if(!looksRepetitive(t,mode)) return {t,mode,dim:mode==='quiet_narrative',live:mode==='field_observation'||mode==='northern_context'};
+  }
+  const fallback = pool.find(Boolean);
+  return fallback ? {t:dialNarrator(fallback),mode,dim:mode==='quiet_narrative',live:mode==='field_observation'||mode==='northern_context'} : null;
+}
+function buildMarquee(){
+  const items=[];
+  const dataItems=extraDataItems();
+
+  if(S.weather){
+    items.push({t:`${S.weather.temperature_2m.toFixed(0)}F · ${skyL(S.weather.weather_code,S.weather.cloud_cover)}.`,type:'headline',live:true});
+    items.push({t:`Wind ${S.weather.wind_speed_10m<1?'calm':`${S.weather.wind_speed_10m.toFixed(0)} mph ${compassDir(S.weather.wind_direction_10m)}`}.`,type:'wind'});
+  }
+
+  shuffle(dataItems).slice(0,2).forEach(i=>items.push(i));
+  modeOrder(10).forEach(mode=>{
+    const cand = candidateFromMode(mode);
+    if(cand) items.push(cand);
+  });
+  shuffle(dataItems).slice(2).forEach(i=>items.push(i));
+
+  const deduped=[];
+  for(const item of items){
+    if(!item||!item.t) continue;
+    const prev=deduped[deduped.length-1];
+    if(prev && lineSimilarity(prev.t,item.t)>0.44) continue;
+    deduped.push(item);
+    rememberLine(item);
+  }
+
+  const track=document.getElementById('bar-track');
+  if(!track) return;
+  const html = deduped.map(i=>`<span class="bar-item${i.live?' live':i.dim?' dim':''}">${i.t}</span><span class="bar-sep"> · </span>`).join('');
+  track.innerHTML = html + html;
+
+  requestAnimationFrame(()=>{
+    const fullW = track.scrollWidth/2;
+    const speed = 120;
+    const dur = fullW/speed;
+    track.style.animationDuration = `${dur}s`;
+  });
+}
 function updateClock(){
-  const now=new Date(),h=now.getHours(),disp=h%12||12,ampm=h>=12?'PM':'AM';
-  document.getElementById('clock').textContent=`${disp}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${ampm}`;
+  const now=new Date(), h=now.getHours(), disp=h%12||12, ampm=h>=12?'PM':'AM';
+  document.getElementById('clock').textContent = `${disp}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${ampm}`;
   const M=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  const dateEl=document.getElementById('tb-date');if(dateEl)dateEl.textContent=`${M[now.getMonth()]} ${now.getDate()}`;
-  const el=(Date.now()-S.sessionStart)/1000,sh=Math.floor(el/3600),sm=Math.floor((el%3600)/60);
-  const csEl=document.getElementById('c-session');if(csEl)csEl.textContent=`${sh}h ${pad(sm)}m`;
-  checkMilestones(now);updateWOI(now);
+  document.getElementById('bar-date').textContent = `${M[now.getMonth()]} ${now.getDate()}`;
+  checkMilestones(now);
+  updateWOI(now);
 }
-setInterval(updateClock,1000);updateClock();
-
-function updateSolar(){
-  const now=new Date(),moon=SunCalc.getMoonIllumination(now);
-  document.getElementById('moon-val').textContent=moonName(moon.phase);
-  document.getElementById('moon-sub').textContent=`${(moon.fraction*100).toFixed(0)}% illuminated`;
+function checkMilestones(now){
+  const el=Math.floor((now-S.sessionStart)/60000);
+  MILESTONES.forEach(m=>{
+    if(el>=m.min && !S.milestones.has(m.min)){
+      S.milestones.add(m.min);
+      setTimeout(()=>{
+        if(S.centerBusy) return;
+        document.getElementById('ms-text').textContent = m.text;
+        showC(document.getElementById('milestone'),6000);
+      },3000);
+    }
+  });
 }
-function moonName(p){if(p<0.03||p>0.97)return'New Moon';if(p<0.22)return'Waxing Crescent';if(p<0.28)return'First Quarter';if(p<0.47)return'Waxing Gibbous';if(p<0.53)return'Full Moon';if(p<0.72)return'Waning Gibbous';if(p<0.78)return'Last Quarter';return'Waning Crescent';}
-setInterval(updateSolar,30000);updateSolar();
-
-async function updateWeather(){
-  try{
-    const r=await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,wind_speed_10m,wind_direction_10m,pressure_msl,cloud_cover,weather_code&hourly=temperature_2m,weather_code,precipitation_probability,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FDetroit&forecast_days=1`);
-    const d=await r.json(),c=d.current;
-    S.weather=c;S.pressureTrend.push({t:Date.now(),p:c.pressure_msl});
-    if(S.pressureTrend.length>8)S.pressureTrend.shift();
-    S.forecast=parseFc(d.hourly);
-    const sky=skyL(c.weather_code,c.cloud_cover);
-    const twEl=document.getElementById('tb-weather');if(twEl)twEl.textContent=`${c.temperature_2m.toFixed(0)}°F · ${sky}`;
-    const wvEl=document.getElementById('weather-val');if(wvEl)wvEl.textContent=`${c.temperature_2m.toFixed(0)}°F · ${sky}`;
-    const wsEl=document.getElementById('weather-sub');if(wsEl)wsEl.textContent=`${c.cloud_cover}% cloud cover · ${c.wind_speed_10m<1?'calm':c.wind_speed_10m.toFixed(0)+' mph '+compassDir(c.wind_direction_10m)}`;
-    const ctEl=document.getElementById('c-temp');if(ctEl)ctEl.textContent=`${c.temperature_2m.toFixed(0)}°F`;
-    const csEl=document.getElementById('c-sky');if(csEl)csEl.textContent=sky;
-    const t=pTrend();
-    const pvEl=document.getElementById('pressure-val');if(pvEl)pvEl.textContent=`${(c.pressure_msl*0.02953).toFixed(2)} inHg`;
-    const psEl=document.getElementById('pressure-sub');if(psEl)psEl.textContent=t==='falling'?'↓ Falling — front approaching':t==='rising'?'↑ Rising — stabilizing':'→ Stable';
-    const wvdEl=document.getElementById('wind-val');if(wvdEl)wvdEl.textContent=c.wind_speed_10m<1?'Calm':`${c.wind_speed_10m.toFixed(0)} mph ${compassDir(c.wind_direction_10m)}`;
-    const wsdEl=document.getElementById('wind-sub');if(wsdEl)wsdEl.textContent=windL(c.wind_speed_10m);
-    renderState();buildTicker(c);
-  }catch(e){console.warn(e);}
-}
-function parseFc(h){if(!h||!h.time)return[];const now=new Date(),r=[];for(let i=0;i<h.time.length&&r.length<4;i++){const t=new Date(h.time[i]);if(t>now)r.push({hoursOut:Math.round((t-now)/3600000),temp:h.temperature_2m[i],code:h.weather_code[i],precipProb:h.precipitation_probability[i]});}return r;}
-function fcInsight(){const fc=S.forecast||[];if(!fc.length)return null;const rain=fc.find(h=>h.precipProb>50);if(rain){const l=rain.code>=95?'Storm':rain.code>=61?'Rain':'Drizzle';return`${l} likely in ${rain.hoursOut===1?'~1 hour':`~${rain.hoursOut} hrs`}`;}if(fc.length>=2&&S.weather){const drop=S.weather.temperature_2m-fc[fc.length-1].temp;if(drop>8)return`Temp dropping ${drop.toFixed(0)}° ahead`;if(drop<-8)return`Temp rising ${Math.abs(drop).toFixed(0)}° ahead`;}return null;}
-function skyL(code,cloud){if([0].includes(code))return'Clear';if([1].includes(code))return'Mainly clear';if([2].includes(code))return'Partly cloudy';if([3].includes(code))return'Overcast';if([45,48].includes(code))return'Fog';if([51,53,55].includes(code))return'Drizzle';if([61,63,65,80,81,82].includes(code))return'Rain';if([71,73,75,77].includes(code))return'Snow';if([95,96,99].includes(code))return'Thunderstorm';return`${cloud}% cloud`;}
-function windL(mph){if(mph<1)return'No surface movement';if(mph<5)return'Barely perceptible';if(mph<10)return'Leaves stirring';if(mph<15)return'Small branches moving';if(mph<20)return'Canopy active';return'Sustained canopy motion';}
-updateWeather();setInterval(updateWeather,10*60*1000);
-
-async function updateNOAA(){try{const r=await fetch(`https://api.weather.gov/alerts/active?zone=${NOAA_ZONE}`,{headers:{'Accept':'application/geo+json','User-Agent':'backyard-overlay/9'}});const d=await r.json();const a=(d.features||[]).filter(f=>['Warning','Watch','Advisory'].some(t=>f.properties.event.includes(t)));const bar=document.getElementById('noaa-bar'),led=document.getElementById('led');if(a.length){document.getElementById('noaa-text').textContent=a[0].properties.event.toUpperCase();bar.classList.add('active');if(led)led.classList.add('alert');}else{bar.classList.remove('active');if(led)led.classList.remove('alert');}}catch(e){}}
-updateNOAA();setInterval(updateNOAA,15*60*1000);
-
-const ARCS={spring:['Spring migration window · Roscommon County','Warbler movement active · late April through mid-May','Loon return window · Higgins Lake avg Apr 18','Woodcock display flights · dawn and dusk'],summer:['Fawn season · does with newborns nearby','Peak breeding activity · most species active','Hummingbird season · through late August'],autumn:['Fall migration corridor active','Rut preparation underway · October','Hawk migration active · September'],winter:['Deep winter · feeder traffic primary activity','Deer yarded in conifer cover','Great Horned Owl nesting · January–February']};
-function updateSeasonalArc(){const el=document.getElementById('sa-text');if(!el)return;const s=season(),pool=ARCS[s],doy=Math.floor((new Date()-new Date(new Date().getFullYear(),0,0))/86400000),pick=pool[Math.floor(Date.now()/(3*60*60*1000))%pool.length];el.textContent=`Day ${doy} · ${pick}`;}
-updateSeasonalArc();setInterval(updateSeasonalArc,3*60*60*1000);
-
 function updateWOI(now){
-  const times=SunCalc.getTimes(now,LAT,LON),msr=(times.sunrise-now)/60000,mss=(times.sunset-now)/60000,h=now.getHours(),el=document.getElementById('window-interest');
-  function set(ey,main,sub,count){document.getElementById('wi-eyebrow').textContent=ey;document.getElementById('wi-main').textContent=main;document.getElementById('wi-sub').textContent=sub;document.getElementById('wi-count').textContent=count;el.classList.add('active');}
-  if(h>=5&&h<8&&msr<10){set('Peak Movement Window','Dawn — active','Most active period of the morning','');return;}
-  if(h>=17&&h<20&&mss>-30&&mss<20){set('Peak Movement Window','Dusk — active','Most active period of the day','');return;}
-  if(msr>0&&msr<40){const m=Math.floor(msr),s=Math.floor((msr-m)*60);set('Dawn Watch Window','Movement window opening','Wildlife activity increases at first light',`${m}:${pad(s)}`);return;}
-  if(mss>0&&mss<50){const m=Math.floor(mss),s=Math.floor((mss-m)*60);set('Dusk Watch Window','Peak window approaching','Deer and feeder traffic peak at last light',`${m}:${pad(s)}`);return;}
+  const times=SunCalc.getTimes(now,LAT,LON);
+  const msr=(times.sunrise-now)/60000, mss=(times.sunset-now)/60000, h=now.getHours(), el=document.getElementById('window-interest');
+
+  function set(ey,main,sub,count){
+    document.getElementById('wi-eyebrow').textContent=ey;
+    document.getElementById('wi-main').textContent=main;
+    document.getElementById('wi-sub').textContent=sub;
+    document.getElementById('wi-count').textContent=count;
+    el.classList.add('active');
+  }
+
+  if(h>=5&&h<8&&msr<10){set('Peak Window','Dawn — active','Most active period of the morning','');return;}
+  if(h>=17&&h<20&&mss>-30&&mss<20){set('Peak Window','Dusk — active','Most active period of the day','');return;}
+  if(msr>0&&msr<40){const m=Math.floor(msr),s=Math.floor((msr-m)*60);set('Dawn Window','Light opening','Things usually change at first light',`${m}:${pad(s)}`);return;}
+  if(mss>0&&mss<50){const m=Math.floor(mss),s=Math.floor((mss-m)*60);set('Dusk Window','Last light coming','This window usually shortens fast',`${m}:${pad(s)}`);return;}
   el.classList.remove('active');
 }
+async function updateWeather(){
+  try{
+    const [wr,aqr] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&current=temperature_2m,wind_speed_10m,wind_direction_10m,pressure_msl,cloud_cover,weather_code&hourly=temperature_2m,weather_code,precipitation_probability,wind_speed_10m&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=America%2FDetroit&forecast_days=1`),
+      fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${LAT}&longitude=${LON}&current=us_aqi,pm10,pm2_5,ozone&timezone=America%2FDetroit`)
+    ]);
+    const d=await wr.json(), c=d.current;
+    S.weather=c;
+    S.pressureTrend.push({t:Date.now(),p:c.pressure_msl});
+    if(S.pressureTrend.length>8) S.pressureTrend.shift();
+    S.forecast=parseFc(d.hourly);
 
-const STATES={QUIET:{night:[{l:'Overnight stillness',m:'Nocturnal patterns settled — minimal movement expected'},{l:'Deep night — monitoring',m:'Owl and coyote activity possible'}],midday:[{l:'Midday lull',m:'Heat suppresses ground movement — typical pattern'},{l:'Low-activity window',m:'Movement limited to upper canopy'}],default:[{l:'Quiet canopy period',m:'Conditions suggest reduced movement this hour'},{l:'Sustained quiet',m:'No triggers detected — baseline conditions holding'}]},BUILD:{pre_dawn:[{l:'Pre-dawn build',m:'Movement increases in the 20 min before first light'},{l:'Dawn approach',m:'Peak morning period begins within 15 min'}],pre_dusk:[{l:'Dusk movement building',m:'Ground activity likely in the next 20–30 min'},{l:'Evening window opening',m:'Deer and feeder traffic peak as light flattens'}],post_quiet:[{l:'Extended quiet — watch',m:'Prolonged lull often precedes a concentrated arrival burst'}],pressure_drop:[{l:'Pressure falling — elevated activity',m:'Wildlife typically feed ahead of approaching fronts'}],default:[{l:'Activity building',m:'Conditions favor increased movement in the next 15–25 min'}]},ACTIVE:{dawn:[{l:'Dawn window — active',m:'First-light movement underway — peak morning period'}],dusk:[{l:'Dusk window — active',m:'Peak daily activity period in progress'},{l:'Evening movement underway',m:'Deer and feeder traffic typically peak in this window'}],default:[{l:'Active period',m:'Conditions aligned for peak movement — watch closely'}]},LULL:{default:[{l:'Post-activity lull',m:'Activity decreasing — another cycle likely in 20–40 min'},{l:'Inter-burst interval',m:'Quiet following activity — next window 20–40 min out'}]},TRANSITION:{light:[{l:'Light transition',m:'Shadow angle shifting — activity may follow'},{l:'Golden hour transition',m:'Low angle light increases ground-level visibility'}],default:[{l:'Conditions in transition',m:'Environmental shift underway — activity response likely'}]},DRAMA:{falling:[{l:'Pressure dropping — watch feeders',m:'Animals feed heavily ahead of fronts — elevated activity likely'}],rising:[{l:'Front clearing — activity resuming',m:'Pressure stabilizing — movement typically increases post-front'}]},NIGHT:{default:[{l:'Night observation',m:'Nocturnal window — owl and coyote activity possible'},{l:'After midnight',m:'The forest runs on different rules at night'},{l:'Low-light monitoring',m:'Most diurnal species inactive — nocturnal patterns hold'}]}};
-const lsi={};
-function pickS(sk,sub){const pool=STATES[sk]?.[sub]||STATES[sk]?.default||Object.values(STATES[sk]||{})[0]||[{l:'—',m:'—'}];const key=`${sk}_${sub}`;let idx;do{idx=Math.floor(Math.random()*pool.length);}while(pool.length>1&&idx===lsi[key]);lsi[key]=idx;return pool[idx];}
-function compState(){const now=new Date(),h=now.getHours(),t=pTrend(),fq=Math.floor((Date.now()-S.feederQuietSince)/60000),times=SunCalc.getTimes(now,LAT,LON),msr=(times.sunrise-now)/60000,mss=(times.sunset-now)/60000,p=period();if(h<5||h>=22)return{s:'NIGHT',sub:'default'};if(h>=5&&h<8&&msr<10)return{s:'ACTIVE',sub:'dawn'};if(h>=17&&h<20&&mss>-20&&mss<30)return{s:'ACTIVE',sub:'dusk'};if(t==='falling'&&fq<15)return{s:'DRAMA',sub:'falling'};if(t==='rising')return{s:'DRAMA',sub:'rising'};if(msr>0&&msr<40)return{s:'BUILD',sub:'pre_dawn'};if(mss>0&&mss<50)return{s:'BUILD',sub:'pre_dusk'};if(t==='falling')return{s:'BUILD',sub:'pressure_drop'};if(fq>45&&p!=='night')return{s:'BUILD',sub:'post_quiet'};if(S.lastEventAt&&Date.now()-S.lastEventAt<8*60000&&S.lastEventState==='ACTIVE')return{s:'LULL',sub:'default'};if((h>=6&&h<7)||(h>=19&&h<20))return{s:'TRANSITION',sub:'light'};if(h>=11&&h<15)return{s:'QUIET',sub:'midday'};return{s:'QUIET',sub:'default'};}
-function renderState(){const{s,sub}=compState(),line=pickS(s,sub),el=document.getElementById('sm-state');if(el){el.textContent=line.l;el.className=`sm-state s-${s.toLowerCase()}`;}const me=document.getElementById('sm-meaning');if(me){const fc=fcInsight();me.textContent=fc&&s!=='ACTIVE'&&s!=='DRAMA'?`${line.m} · ${fc}`:line.m;}}
-function tickAgo(){const el=document.getElementById('sm-ago');if(!el)return;if(!S.lastEventAt||!S.lastEventLabel){el.textContent='';return;}el.textContent=`${S.lastEventLabel} · ${fmtAgo(Date.now()-S.lastEventAt)}`;}
-function logEvent(label){S.lastEventAt=Date.now();S.lastEventLabel=label;S.lastEventState=compState().s;S.eventCount++;tickAgo();renderState();}
-setInterval(renderState,60000);setInterval(tickAgo,1000);renderState();
+    try{
+      const aq=await aqr.json();
+      if(aq&&aq.current) S.air=aq.current;
+    }catch(e){}
 
-function simFeeder(){const h=new Date().getHours(),peak=(h>=5&&h<8)||(h>=16&&h<19);if(!S.feederActive&&Math.random()<(peak?0.40:0.08)/60){S.feederActive=true;logEvent('Feeder traffic · rotation in progress');setTimeout(()=>{S.feederActive=false;S.feederQuietSince=Date.now();logEvent('Feeder quiet · traffic ended');},(25+Math.random()*90)*1000);}}
-setInterval(simFeeder,15000);simFeeder();
+    updateMemory();
+    buildMarquee();
+  }catch(e){
+    console.warn('weather',e);
+  }
+}
+async function updateNOAA(){
+  try{
+    const r=await fetch(`https://api.weather.gov/alerts/active?zone=${NOAA_ZONE}`,{
+      headers:{'Accept':'application/geo+json','User-Agent':'backyard-overlay/9'}
+    });
+    const d=await r.json();
+    const a=(d.features||[]).filter(f=>['Warning','Watch','Advisory'].some(t=>f.properties.event.includes(t)));
+    const bar=document.getElementById('noaa-bar');
+    if(a.length){
+      document.getElementById('noaa-text').textContent=a[0].properties.event.toUpperCase();
+      bar.classList.add('active');
+    }else{
+      bar.classList.remove('active');
+    }
+  }catch(e){}
+}
+async function hydrateElder(){
+  if(!S.weather) return;
+  try{
+    const ctx = {
+      location:'Higgins Lake, Roscommon County, Michigan',
+      period:period(),
+      season:season(),
+      weather:{
+        temp_f:S.weather.temperature_2m,
+        wind_mph:S.weather.wind_speed_10m,
+        wind_dir:compassDir(S.weather.wind_direction_10m),
+        sky:skyL(S.weather.weather_code,S.weather.cloud_cover),
+        pressure_trend:pTrend()
+      },
+      forecast:(S.forecast||[]).slice(0,4),
+      phenology:phenNow().map(p=>p.n).slice(0,2),
+      recent_lines:S.lineHistory.slice(-30),
+      memory_callbacks:(S.memory.callbacks||[]).slice(-6).map(c=>c.text)
+    };
 
-const SEEDS=['Black-capped Chickadee','White-breasted Nuthatch','Downy Woodpecker','Blue Jay','American Goldfinch','Dark-eyed Junco','Hairy Woodpecker'];
-document.getElementById('species-list').innerHTML=SEEDS.map(n=>`<span class="sp">${n}</span>`).join('');
+    const r = await fetch(ELDER_ENDPOINT,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(ctx)
+    });
 
-const SIM={night:['Owl vocalization','Deer crossing · lower trail','Stillness holding','Coyote far distance'],dawn:['First chorus registered','Squirrel emergence','Ground movement · feeder base','Chickadee first arrival'],morning:['Chickadee rotation · feeder','Woodpecker drumming · mid-canopy','Jay intrusion · brief','Crow vocalization · distant'],midday:['Raptor pass · high overhead','Canopy movement · wind-driven','Nuthatch descent · trunk foraging'],afternoon:['Understory movement increasing','Shadow shift noted','Wind direction change'],dusk:['Deer approach · understory','Evening sequence beginning','Last jay departure','Surface calm establishing']};
-function fireSimEvent(){logEvent((SIM[period()]||SIM.midday)[Math.floor(Math.random()*(SIM[period()]||SIM.midday).length)]);}
-function schSim(){const p=period();setTimeout(()=>{fireSimEvent();schSim();},(((p==='night'?280:p==='dawn'||p==='dusk'?80:140)+Math.random()*160)*1000));}
-schSim();fireSimEvent();
+    if(!r.ok) throw new Error(r.status);
+    const data = await r.json();
+    if(Array.isArray(data.lines) && data.lines.length){
+      S.elderPool = normalizeElderLines(data.lines);
+    }
+  }catch(e){
+    console.warn('elder fallback',e);
+  }
+}
 
-const RARE={dawn:[{cat:'Movement · unresolved',main:'Peripheral motion detected · low elevation · eastern edge',sub:'Duration 3–5 seconds. Not attributed to known species.'}],morning:[{cat:'Ground disturbance · noted',main:'Irregular pattern at southern approach · spacing inconsistent',sub:'Unconfirmed. Continuing observation.'}],midday:[{cat:'Reflection anomaly · noted',main:'Light reflection · stationary · mid-canopy · 8 seconds',sub:'Not cloud-attributed. Classification pending.'}],afternoon:[{cat:'Movement · classification unresolved',main:'Bipedal gait pattern · treeline · western exposure',sub:'Mass estimate: large. Gait inconsistent with known regional species.'}],dusk:[{cat:'Movement · classification unresolved',main:'Large bipedal silhouette · treeline · low-light conditions',sub:'Mass significantly above typical regional fauna. No further activity.'}],night:[{cat:'Aerial object · unresolved',main:'Slow-moving · low altitude · no navigation lights · bearing north',sub:'Duration: 11 seconds. No match in flight data. Unresolved.'},{cat:'Vocalization · unmatched',main:'Sound event · 2.8 seconds · no echo · bearing unresolved',sub:'Not attributed to known regional species. Not repeated.'}]};
-const BF={cat:'Movement · classification unresolved',main:'Bipedal gait pattern · large mass estimate · western treeline',sub:'Duration: approximately 6 seconds. Gait inconsistent with known regional fauna.'};
-function fireRare(ev){const p=period(),pool=RARE[p]||RARE.night,e=ev||pool[Math.floor(Math.random()*pool.length)],now=new Date(),h=now.getHours(),ap=h>=12?'PM':'AM',ts=`${h%12||12}:${pad(now.getMinutes())}:${pad(now.getSeconds())} ${ap}`;document.getElementById('rb-cat').textContent=e.cat;document.getElementById('rb-main').textContent=e.main;document.getElementById('rb-sub').textContent=e.sub;document.getElementById('rb-ts').textContent=`Logged · ${ts} · classification pending`;S.centerBusy=true;document.getElementById('rare-banner').classList.add('active');logEvent(e.cat);S.rareLog.push({ts,cat:e.cat});setTimeout(()=>{document.getElementById('rare-banner').classList.remove('active');setTimeout(()=>{S.centerBusy=false;renderState();},600);},26000);}
-function schRare(){const h=new Date().getHours(),base=(h>=5&&h<8)||(h>=17&&h<20)?32:h>=8&&h<17?65:100;setTimeout(()=>{fireRare();schRare();},(base+Math.random()*40)*60000);}
-schRare();
-function schBF(){setTimeout(()=>{fireRare(BF);schBF();},(420+Math.random()*180)*60000);}
-schBF();
+/* INIT */
+scaleOverlay();
+window.addEventListener('resize',scaleOverlay);
+if(window.location.search.includes('debug')) document.body.classList.add('debug');
 
-function checkMilestones(now){const el=Math.floor((now-S.sessionStart)/60000);MILESTONES.forEach(m=>{if(el>=m.min&&!S.milestones.has(m.min)){S.milestones.add(m.min);setTimeout(()=>{if(S.centerBusy)return;document.getElementById('ms-text').textContent=m.text;showC(document.getElementById('milestone'),6000);},3000);}});}
+updateClock();
+setInterval(updateClock,1000);
 
-function buildJournal(){const fq=Math.floor((Date.now()-S.feederQuietSince)/60000),t=pTrend(),wind=S.weather?S.weather.wind_speed_10m:0,temp=S.weather?parseInt(S.weather.temperature_2m):null,entries=[];if(fq>30)entries.push(`The feeders have been quiet for ${fq} minutes.`);if(fq>55)entries.push(`An hour of silence at the feeders. The next arrival tends to be notable.`);if(t==='falling')entries.push(`The pressure has been dropping. Something in the forest already knows.`);if(t==='rising')entries.push(`Pressure climbing. The front has passed. Expect movement to resume.`);if(wind>12)entries.push(`Wind in the upper canopy. Ground movement tends to follow when it drops.`);if(wind<2)entries.push(`No wind. Sound carries further than usual right now.`);if(period()==='midday')entries.push(`The forest goes quiet around this hour. It will come back.`);if(period()==='night')entries.push(`After midnight the forest runs on different rules.`);if(temp&&temp<32)entries.push(`Below freezing. Ground is hard. Sound carries differently in cold air.`);const se={spring:['Migration is moving through. Some of what passes overhead will not be here tomorrow.'],summer:['The forest is at full leaf. Animals use the cover differently now.'],autumn:['The rut changes everything about how deer move. Expected patterns no longer apply.'],winter:['In deep winter, the feeders become the center of everything.']};entries.push(...(se[season()]||[]));if(!entries.length)entries.push(`The forest is quiet. It tends not to stay that way.`);return entries[Math.floor(Math.random()*entries.length)];}
-function fireJournal(){if(S.centerBusy)return;const text=buildJournal(),now=new Date(),h=now.getHours(),ap=h>=12?'PM':'AM';document.getElementById('je-text').textContent=text;document.getElementById('je-attr').textContent=`Field note · ${h%12||12}:${pad(now.getMinutes())} ${ap}`;showC(document.getElementById('journal-entry'),9000);}
-function schJournal(){setTimeout(()=>{fireJournal();schJournal();},(900+Math.random()*600)*1000);}
-setTimeout(()=>{fireJournal();schJournal();},8*60*1000);
+updateWeather();
+setInterval(updateWeather,6*60*1000);
 
-const ES=['The forest quiets before a hawk moves through it.','Chickadees arrive in loose rotations, not crowds.','A falling barometer quiets the songbirds before it reaches the leaves.','Deer move along the same trails their mothers walked.','The maples redden from the crown down.','Hemlock shade holds frost into June.','A single raven is announcing something. Two ravens are discussing it.','Red squirrels scold what they cannot chase.','White pines lean toward the prevailing wind over their lifetimes.','First frost often arrives on a night of perfect stars.','A north wind carries the sound of the river; a south wind carries the road.','The shortest day brings the longest shadows at noon.','The forest breathes differently before rain than after it.','Woodpeckers excavate; everything else inherits.','Crows remember faces. They also remember absences.','In deep cold, sound carries before light does.','The squirrel that stops and listens has already heard something.','November light is not dim. It is precise.','A fox moves through snow without touching it.','Every cleared trail through this forest was an animal\'s idea first.','The understory in rain becomes a different place than the understory in sun.','Wind reveals the structure of things the eye misses in stillness.','Something that has always been here does not need to announce itself.','Old growth reads its history in its own scars.','The forest at night runs on different rules.','Most of what happens here happens when no one is watching.','Patience is the only instrument that reads this place correctly.'];
-S.elderPool=[...ES];
-function pickQuote(){let idx;do{idx=Math.floor(Math.random()*S.elderPool.length);}while(S.elderPool.length>1&&idx===S.lastElderIdx);S.lastElderIdx=idx;const el=document.getElementById('eq-quote');el.classList.add('fade');setTimeout(()=>{el.textContent=S.elderPool[idx];el.classList.remove('fade');},1400);}
-pickQuote();
-function schQuote(){setTimeout(()=>{pickQuote();schQuote();},(270+Math.random()*210)*1000);}
-schQuote();
-async function hydrateElder(){if(!S.weather)return;try{const c=S.weather,ctx={location:'Higgins Lake, Roscommon County, Michigan',time:new Date().toISOString(),period:period(),season:season(),weather:{temp_f:c.temperature_2m,wind_mph:c.wind_speed_10m,wind_dir:compassDir(c.wind_direction_10m),sky_code:c.weather_code,cloud_pct:c.cloud_cover,pressure_hpa:c.pressure_msl,pressure_trend:pTrend()},phenology:phenNow().map(p=>p.n).slice(0,2),rare_events_session:S.rareLog.length};const r=await fetch(ELDER_ENDPOINT,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(ctx)});if(!r.ok)throw new Error(r.status);const data=await r.json();if(Array.isArray(data.lines)&&data.lines.length)S.elderPool=[...data.lines,...ES];}catch(e){}}
-setTimeout(()=>{hydrateElder();setInterval(hydrateElder,14*60*1000);},10000);
+updateNOAA();
+setInterval(updateNOAA,15*60*1000);
 
-const TA=['Higgins Lake · avg depth 101 ft · max 135 ft · among the clearest lakes in Michigan','Roscommon County · approximately 70% forested · mixed conifer and northern hardwood','White-tailed deer movement peaks at dawn and dusk — most crossings within 40 min of each','Black-capped chickadees typically the first species to return to a feeder after disturbance','Most feeder bursts last 2–4 minutes and follow a consistent species arrival sequence','A falling barometer drives increased feeding behavior 6–12 hours before a front arrives','Barometric changes typically registered by wildlife before instruments confirm them','Pileated woodpecker excavations are rectangular · all others leave round or oval cavities','Coyotes most vocal between midnight and 3am · calls serve territorial and group functions'];
-const TS={spring:['Spring warbler migration · Roscommon County · peak late April to mid-May · 30+ species possible','Common Loon return window · Higgins Lake · historical average: April 18','Woodcock display flights begin at dusk · males spiral silently upward then descend'],summer:['Fawn season · does keep newborns in separate locations for first 2–3 weeks','Ruby-throated Hummingbirds active June through August · males depart first in late July'],autumn:['Hawk migration active · September · Broad-winged move in numbers on thermal days','Rut peak · Oct 20–Nov 20 · bucks most active at dawn and dusk'],winter:['Deep winter · Black-capped Chickadee and White-breasted Nuthatch are the feeder anchors','Tracks in fresh snow reveal nocturnal movement invisible during daylight sessions']};
-function buildTicker(weather){const items=[...TA];if(weather){const sky=skyL(weather.weather_code,weather.cloud_cover);items.unshift(`Roscommon, MI  ·  ${weather.temperature_2m.toFixed(0)}°F  ·  ${sky}`);}items.push(...(TS[season()]||[]));phenNow().forEach(p=>items.push(p.n));const live=items[0],rest=items.slice(1).sort(()=>Math.random()-0.5),shuffled=[live,...rest],track=document.getElementById('ticker-track');track.innerHTML=[...shuffled,...shuffled].map(i=>`<span class="ticker-item">${i}<span class="ticker-sep"> · </span></span>`).join('');track.style.animationDuration=`${Math.max(70,shuffled.length*10)}s`;}
-buildTicker(null);
+setTimeout(()=>{
+  hydrateElder();
+  setInterval(hydrateElder,5*60*1000);
+},10000);
+
+buildMarquee();
 </script>
 </body>
 </html>
